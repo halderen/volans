@@ -7,5 +7,14 @@ configure
 depcomp
 install-sh
 missing
-opendnssec
 opendnssec.o
+.deps
+config.log
+config.h
+config.h.in
+config.status
+**/*.o
+stamp-h1
+opendnssec
+opendnssecd
+test

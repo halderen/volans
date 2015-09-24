@@ -96,3 +96,12 @@ main(int argc, char** argv)
     
     return EXIT_SUCCESS;
 }
+
+/*
+ * for program
+ * run it in background
+ * obtain its output
+ * provide stdin
+ * monitor it on exit
+ * 
+ */

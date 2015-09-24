@@ -1,0 +1,7 @@
+/usr/bin/gmake  all-am
+gmake[1]: Entering directory `/home/berry/NetBeansProjects/opendnssec'
+/usr/bin/gcc -g3 -gdwarf-2 -pedantic -Wall -Wextra    opendnssec.c   -o opendnssec
+/usr/bin/gcc -DHAVE_CONFIG_H -I.    -I/usr/local/include -g3 -gdwarf-2 -pedantic -Wall -Wextra -MT opendnssec.o -MD -MP -MF .deps/opendnssec.Tpo -c -o opendnssec.o opendnssec.c
+mv -f .deps/opendnssec.Tpo .deps/opendnssec.Po
+/usr/bin/gcc -I/usr/local/include -g3 -gdwarf-2 -pedantic -Wall -Wextra   -o opendnssecd opendnssec.o  
+gmake[1]: Leaving directory `/home/berry/NetBeansProjects/opendnssec'
