@@ -15,13 +15,13 @@ int clean_suite(void) {
 }
 
 void
-test1()
+testGood()
 {
     CU_ASSERT(2 * 2 == 4);
 }
 
 void
-test2()
+testFail()
 {
     CU_ASSERT(2 * 2 == 5);
 }
@@ -36,22 +36,27 @@ main()
         return CU_get_error();
 
     /* Add a suite to the registry */
-    pSuite = CU_add_suite("newcunittest", init_suite, clean_suite);
+    pSuite = CU_add_suite("basic suite", init_suite, clean_suite);
     if (NULL == pSuite) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
     /* Add the tests to the suite */
-    if ((NULL == CU_add_test(pSuite, "test1", test1)) ||
-            (NULL == CU_add_test(pSuite, "test2", test2))) {
+    if ((NULL == CU_add_test(pSuite, "testGood", testGood)) ||
+            (NULL == CU_add_test(pSuite, "testFail", testFail))) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+#ifdef NOTDEFINED
     /* Run all tests using the CUnit Basic interface */
-    CU_basic_set_mode(CU_BRM_VERBOSE);
+    /CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
+#endif
+
+    CU_automated_run_tests();
+
     CU_cleanup_registry();
     return CU_get_error();
 }
