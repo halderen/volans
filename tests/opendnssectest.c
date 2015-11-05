@@ -19,12 +19,14 @@ int clean_suite(void) {
 void
 testGood()
 {
+    printf("test_good\n");
     CU_ASSERT(2 * 2 == 4);
 }
 
 void
 testFail()
 {
+    printf("test_bad\n");
     CU_ASSERT(2 * 2 == 5);
 }
 
