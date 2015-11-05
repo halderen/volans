@@ -7,10 +7,12 @@
  */
 
 int init_suite(void) {
+    printf("init_suite\n");
     return 0;
 }
 
 int clean_suite(void) {
+    printf("clean_suite\n");
     return 0;
 }
 
