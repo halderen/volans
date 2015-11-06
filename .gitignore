@@ -17,5 +17,4 @@ config.status
 stamp-h1
 opendnssec
 opendnssecd
-test
 **/*-Results.xml
