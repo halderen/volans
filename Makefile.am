@@ -10,12 +10,12 @@ check_PROGRAMS = test
 bin_PROGRAMS = opendnssec
 sbin_PROGRAMS = opendnssecd
 
-opendnssec_SOURCES = opendnssec.c
-opendnssecd_SOURCES = opendnssec.c
+opendnssec_SOURCES = opendnssec.c utilities.h
+opendnssecd_SOURCES = opendnssec.c utilities.h
 
 test_SOURCES = tests/opendnssectest.c
 
-opendnssec: opendnssec.c
+opendnssec$(EXEEXT): opendnssec.c
 
 TESTS = $(check_PROGRAMS)
 
