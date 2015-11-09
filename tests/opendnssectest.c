@@ -7,23 +7,27 @@
  */
 
 int init_suite(void) {
+    printf("init_suite\n");
     return 0;
 }
 
 int clean_suite(void) {
+    printf("clean_suite\n");
     return 0;
 }
 
 void
 testGood()
 {
+    printf("test_good\n");
     CU_ASSERT(2 * 2 == 4);
 }
 
 void
 testFail()
 {
-    CU_ASSERT(2 * 2 == 5);
+    printf("test_bad\n");
+    CU_ASSERT(2 * 2 == 4);
 }
 
 int
