@@ -39,10 +39,14 @@ struct command_struct {
             char *policy;
         } zoneadd;
         struct {
-            char *name
+            char *name;
         } zonedel;
     } arg;
 };
+
+extern int commandStatus(void);
+extern int commandZoneAdd(char *zone, char* policy);
+extern int commandZoneDel(char *zone);
 
 int
 main(int argc, char** argv)
@@ -92,8 +96,11 @@ main(int argc, char** argv)
         } else if (argc - optind >= 2 && !strcmp(argv[optind + 0], "del") && !strcmp(argv[optind + 1], "zone")) {
             command.cmd = ZONEDEL;
             optind += 2;
+        } else if (argc - optind == 0) {
+            fprintf(stderr, "%s: no command given.\n", argv0);
+	    return EXIT_FAILURE;
         } else {
-            fprintf(stderr, "%s: unrecognized command line arguments:", argv0);
+            fprintf(stderr, "%s: unrecognized command line arguments:\n", argv0);
             for (i = optind; i < argc; i++) {
                 fprintf(stderr, " %s\n", argv[i]);
             }
@@ -142,7 +149,7 @@ main(int argc, char** argv)
                 status = commandZoneAdd(command.arg.zoneadd.name, command.arg.zoneadd.policy);
                 break;
             case ZONEDEL:
-                status = commandZoneAdd(command.arg.zonedel.name);
+                status = commandZoneDel(command.arg.zonedel.name);
                 break;
         }
         if(status) {
@@ -170,4 +177,17 @@ main(int argc, char** argv)
     }
 
     return EXIT_SUCCESS;
+}
+
+int commandStatus(void)
+{
+	return 0;
+}
+int commandZoneAdd(char *zone, char* policy)
+{
+	return 0;
+}
+int commandZoneDel(char *zone)
+{
+	return 0;
 }

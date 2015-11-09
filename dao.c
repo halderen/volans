@@ -1,3 +1,24 @@
+#include <sqlite.h>
+
+void
+create()
+{
+}
+
+void
+open()
+{
+}
+
+void
+persist(bool_t keepOpen)
+{
+}
+
+void
+close()
+{
+}
 
 C_GetFunctionList
 14    sqlite3 *db;

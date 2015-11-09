@@ -10,6 +10,7 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>data.h</itemPath>
       <itemPath>utilities.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -19,10 +20,10 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>daemonize.c</itemPath>
       <itemPath>dao.c</itemPath>
       <itemPath>opendnssec.c</itemPath>
       <itemPath>scheduler.c</itemPath>
-      <itemPath>testpkcs11.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -47,11 +48,13 @@
       </toolsSet>
       <compileType>
       </compileType>
+      <item path="daemonize.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="scheduler.c" ex="false" tool="0" flavor2="0">
+      <item path="data.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
+      <item path="scheduler.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -89,15 +92,17 @@
           </ccTool>
         </makeTool>
       </makefileType>
+      <item path="daemonize.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="data.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="scheduler.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>
