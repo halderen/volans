@@ -27,7 +27,7 @@ void
 testFail()
 {
     printf("test_bad\n");
-    CU_ASSERT(2 * 2 == 5);
+    CU_ASSERT(2 * 2 == 4);
 }
 
 int
