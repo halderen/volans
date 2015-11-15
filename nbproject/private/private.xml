@@ -15,7 +15,11 @@
             <file>file:/home/berry/NetBeansProjects/volans/testpkcs11.c</file>
         </group>
         <group name="internetnl">
-            <file>file:/home/berry/volans/opendnssec.c</file>
+            <file>file:/home/berry/volans/dao.c</file>
+            <file>file:/home/berry/volans/usecases.txt</file>
+            <file>file:/home/berry/volans/dataset.c</file>
+            <file>file:/home/berry/volans/README</file>
+            <file>file:/home/berry/volans/scheduler.c</file>
         </group>
     </open-files>
 </project-private>

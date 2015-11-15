@@ -16,6 +16,7 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
+      <itemPath>schema-mysql.sql</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -24,6 +25,18 @@
       <itemPath>dao.c</itemPath>
       <itemPath>opendnssec.c</itemPath>
       <itemPath>scheduler.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+      <itemPath>configure</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -48,13 +61,15 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="daemonize.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="data.h" ex="false" tool="3" flavor2="0">
+      <item path="dataset.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="scheduler.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -92,17 +107,19 @@
           </ccTool>
         </makeTool>
       </makefileType>
-      <item path="daemonize.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="data.h" ex="false" tool="3" flavor2="0">
+      <item path="dataset.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="scheduler.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>

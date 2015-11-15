@@ -31,7 +31,7 @@ usage() {
 
 struct command_struct {
     enum {
-        STATUS, ZONEADD, ZONEDEL
+        STATUS, ZONEADD, ZONEDEL, MODELREAD, MODELCREATE
     } cmd;
     union {
         struct {
@@ -47,6 +47,8 @@ struct command_struct {
 extern int commandStatus(void);
 extern int commandZoneAdd(char *zone, char* policy);
 extern int commandZoneDel(char *zone);
+extern int commandModelCreate(void);
+extern int commandModelRead(void);
 
 int
 main(int argc, char** argv)
@@ -77,6 +79,12 @@ main(int argc, char** argv)
         }
         if (argc - optind >= 1 && !strcmp(argv[optind + 0], "status")) {
             command.cmd = STATUS;
+            optind += 2;
+        } else if (argc - optind >= 2 && !strcmp(argv[optind + 0], "model") && !strcmp(argv[optind + 1], "create")) {
+            command.cmd = MODELCREATE;
+            optind += 2;
+        } else if (argc - optind >= 2 && !strcmp(argv[optind + 0], "model") && !strcmp(argv[optind + 1], "read")) {
+            command.cmd = MODELREAD;
             optind += 2;
         } else if (argc - optind >= 2 && !strcmp(argv[optind + 0], "zone") && !strcmp(argv[optind + 1], "add")) {
             command.cmd = ZONEADD;
@@ -113,6 +121,18 @@ main(int argc, char** argv)
                     return EXIT_FAILURE;
                 }
                 break;
+            case MODELCREATE:
+                if (argc - optind != 1) {
+                    fprintf(stderr, "%s: model create command expects no arguments\n",argv0);
+                    return EXIT_FAILURE;
+                }
+                break;
+            case MODELREAD:
+                if (argc - optind != 1) {
+                    fprintf(stderr, "%s: model read command expects no arguments\n",argv0);
+                    return EXIT_FAILURE;
+                }
+                break;
             case ZONEADD:
                 command.arg.zoneadd.policy = "default";
                 while ((ch = getopt_long(argc, argv, "p", command_zoneadd_options, NULL)) >= 0) {
@@ -143,6 +163,12 @@ main(int argc, char** argv)
         }
         switch(command.cmd) {
             case STATUS:
+                status = commandStatus();
+                break;
+            case MODELCREATE:
+                status = commandStatus();
+                break;
+            case MODELREAD:
                 status = commandStatus();
                 break;
             case ZONEADD:
