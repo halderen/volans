@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 AC_INIT([opendnssec], [1.0], [http://opendnssec.org/])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 ACX_PREFIXHACK
 
@@ -22,6 +22,8 @@ ACX_STRICT
 AX_C___ATTRIBUTE__
 
 AM_CONDITIONAL([WITH_CUNIT], [test "${with_cunit}" != "no" -a -n "$CUNIT_LIBS"])
+
+AM_PROG_CC_C_O
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
