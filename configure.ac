@@ -23,5 +23,7 @@ AX_C___ATTRIBUTE__
 
 AM_CONDITIONAL([WITH_CUNIT], [test "${with_cunit}" != "no" -a -n "$CUNIT_LIBS"])
 
+AM_PROG_CC_C_O
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
