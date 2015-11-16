@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include "utilities.h"
 
 static struct option command_options[] = {
     { "help", no_argument, NULL, 'h'},
@@ -19,8 +20,6 @@ static struct option daemon_options[] = {
     { "no-daemon", no_argument, NULL, 'D'},
     { 0, 0, 0, 0}
 };
-
-extern char* argv0;
 
 char* argv0;
 
@@ -79,7 +78,7 @@ main(int argc, char** argv)
         }
         if (argc - optind >= 1 && !strcmp(argv[optind + 0], "status")) {
             command.cmd = STATUS;
-            optind += 2;
+            optind += 1;
         } else if (argc - optind >= 2 && !strcmp(argv[optind + 0], "model") && !strcmp(argv[optind + 1], "create")) {
             command.cmd = MODELCREATE;
             optind += 2;
@@ -116,19 +115,19 @@ main(int argc, char** argv)
         }
         switch(command.cmd) {
             case STATUS:
-                if (argc - optind != 1) {
+                if (argc - optind != 0) {
                     fprintf(stderr, "%s: status command expects no arguments\n",argv0);
                     return EXIT_FAILURE;
                 }
                 break;
             case MODELCREATE:
-                if (argc - optind != 1) {
+                if (argc - optind != 0) {
                     fprintf(stderr, "%s: model create command expects no arguments\n",argv0);
                     return EXIT_FAILURE;
                 }
                 break;
             case MODELREAD:
-                if (argc - optind != 1) {
+                if (argc - optind != 0) {
                     fprintf(stderr, "%s: model read command expects no arguments\n",argv0);
                     return EXIT_FAILURE;
                 }
@@ -166,10 +165,10 @@ main(int argc, char** argv)
                 status = commandStatus();
                 break;
             case MODELCREATE:
-                status = commandStatus();
+                status = commandModelCreate();
                 break;
             case MODELREAD:
-                status = commandStatus();
+                status = commandModelRead();
                 break;
             case ZONEADD:
                 status = commandZoneAdd(command.arg.zoneadd.name, command.arg.zoneadd.policy);
@@ -205,15 +204,17 @@ main(int argc, char** argv)
     return EXIT_SUCCESS;
 }
 
-int commandStatus(void)
-{
-	return 0;
+int commandStatus(void) {
+    return 0;
 }
-int commandZoneAdd(char *zone, char* policy)
-{
-	return 0;
+
+int commandZoneAdd(char *zone, char* policy) {
+    (void) zone;
+    (void) policy;
+    return 0;
 }
-int commandZoneDel(char *zone)
-{
-	return 0;
+
+int commandZoneDel(char *zone) {
+    (void) zone;
+    return 0;
 }

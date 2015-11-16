@@ -47,4 +47,6 @@ extern void diagnostic_print(char *fmt, ...)
  " \"%s\" failed on line %d: %s (%d)\n", #EX, __LINE__, strerror(err), err); \
   abort(); }} while(0)
 
+extern char* argv0;
+
 #endif

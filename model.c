@@ -2,17 +2,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <mysql/mysql.h>
+#include <schema_mysql.h>
+#include "dataset.h"
 
 struct zone;
 struct keyclass;
 struct keyinstance;
 struct policy;
 
-struct catalog;
-struct collection;
-
-struct catalog* zones;
-struct catalog* policies;
+static dataset_t zones;
+static dataset_t policies;
 
 struct zone {
     char name[64];
@@ -33,7 +32,7 @@ struct zone {
     time_t t7;
     time_t t8;
     struct policy* policy;
-    struct collection* instances;
+    dataset_t keyinstances;
 };
 
 struct keyinstance {
@@ -81,11 +80,13 @@ static int opendatabase()
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
     }
+    return 0;
 }
 
 static int closedatabase()
 {
     mysql_close(mysql);
+    return 0;
 }
 
 int commandModelCreate(void)
@@ -93,12 +94,12 @@ int commandModelCreate(void)
     int status, count = 0;
     MYSQL_RES *result;
     MYSQL_ROW row;
-    MYSQL_FIELD* field;
-    char *cmdsequence = "";
+    const char *cmdsequence = schema_mysql;
     
     if (opendatabase())
         return 1;
 
+    printf(">> %s\n",cmdsequence);
     if (mysql_query(mysql, cmdsequence)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
@@ -106,7 +107,7 @@ int commandModelCreate(void)
     do {
         result = mysql_store_result(mysql);
         if (result) {
-            // were not suppost to have a result
+            /* were not suppost to have a result */
             fprintf(stderr,"Bad initialization script, expected output");
             /* yes; process rows and free the result set */
             for (count = 0; (row = mysql_fetch_row(result)) != NULL; ++count)
@@ -115,7 +116,7 @@ int commandModelCreate(void)
             mysql_free_result(result);
         } else {
             if (mysql_field_count(mysql) == 0) {
-                printf("%lld rows affected\n", mysql_affected_rows(mysql));
+                printf("%d rows affected\n", (int) mysql_affected_rows(mysql));
             } else {
                 fprintf(stderr, "Could not retrieve result set\n");
                 break;
@@ -145,7 +146,7 @@ int commandModelRead(void)
         return 1;
     }
     do {
-        // result = mysql_use_result(conn);
+        /* result = mysql_use_result(conn); */
         result = mysql_store_result(mysql);
         if (result) {
             /* yes; process rows and free the result set */
@@ -158,7 +159,7 @@ int commandModelRead(void)
             mysql_free_result(result);
         } else {
             if (mysql_field_count(mysql) == 0) {
-                printf("%lld rows affected\n", mysql_affected_rows(mysql));
+                printf("%d rows affected\n", (int) mysql_affected_rows(mysql));
             } else {
                 printf("Could not retrieve result set\n");
                 break;

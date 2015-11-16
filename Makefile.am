@@ -15,9 +15,11 @@ check_PROGRAMS = test
 bin_PROGRAMS = opendnssec
 sbin_PROGRAMS = opendnssecd
 
-opendnssec_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h schema_mysql.o
-opendnssecd_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h schema_mysql.o
 BUILT_SOURCES = schema_mysql.h
+
+opendnssec_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
+opendnssec_LDADD = schema_mysql.o
+opendnssecd_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
 
 test_SOURCES = tests/opendnssectest.c
 
@@ -36,7 +38,7 @@ TESTS = $(check_PROGRAMS)
         --redefine-sym _binary_$*_end=$*_end \
         --redefine-sym _binary_$*_size=$*_size_sym \
 	$(<) $(*).o
-	echo "extern const char $(*)[] PROGMEM;" > $(*).h
-	echo "extern const char $(*)_end[] PROGMEM;" >> $(*).h
+	echo "extern const char $(*)[];" > $(*).h
+	echo "extern const char $(*)_end[];" >> $(*).h
 	echo "extern const char $(*)_size_sym[];" >> $(*).h
 	echo "#define $(*)_size ((int)$(*)_size_sym)" >> $(*).h
