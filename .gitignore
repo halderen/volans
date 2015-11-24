@@ -19,7 +19,7 @@ opendnssec
 opendnssecd
 **/*-Results.xml
 test-driver
-schema_mysql.h
+schema-mysql.h
 **/*.log
 **/.dirstamp
 test
