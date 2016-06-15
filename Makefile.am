@@ -3,8 +3,9 @@ CLEANFILES=$(srcdir)/*~ schema_mysql.h
 
 ACLOCAL_AMFLAGS = -Im4
 
-test_CFLAGS = @CUNIT_INCLUDES@
+test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
 #test_AM_LDLIBS = @CUNIT_LIBS@
+test_LDFLAGS = @MYSQL_LDFLAGS@
 test_LDADD = @CUNIT_LIBS@ -lmysqlclient
 
 opendnssec_CFLAGS = @MYSQL_CFLAGS@
