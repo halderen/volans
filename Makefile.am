@@ -1,4 +1,5 @@
-MAINTAINERCLEANFILES= $(srcdir)/Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
+CLEANFILES=$(srcdir)/*~
 
 ACLOCAL_AMFLAGS = -Im4
 
