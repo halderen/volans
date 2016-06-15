@@ -20,6 +20,7 @@ BUILT_SOURCES = schema_mysql.h
 opendnssec_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
 opendnssec_LDADD = schema_mysql.o
 opendnssecd_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
+opendnssecd_LDADD = schema_mysql.o
 
 test_SOURCES = tests/opendnssectest.c
 
@@ -34,9 +35,9 @@ TESTS = $(check_PROGRAMS)
 	fi
 	objcopy --readonly-text -I binary -O elf64-x86-64 -B i386:x86-64 \
         --rename-section .data=.progmem.data,contents,alloc,load,readonly,data \
-        --redefine-sym _binary_$*_start=$* \
-        --redefine-sym _binary_$*_end=$*_end \
-        --redefine-sym _binary_$*_size=$*_size_sym \
+        --redefine-sym _binary_$*_sql_start=$* \
+        --redefine-sym _binary_$*_sql_end=$*_end \
+        --redefine-sym _binary_$*_sql_size=$*_size_sym \
 	$(<) $(*).o
 	echo "extern const char $(*)[];" > $(*).h
 	echo "extern const char $(*)_end[];" >> $(*).h
