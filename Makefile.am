@@ -1,5 +1,5 @@
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
-CLEANFILES=$(srcdir)/*~
+CLEANFILES=$(srcdir)/*~ schema_mysql.h
 
 ACLOCAL_AMFLAGS = -Im4
 
@@ -29,18 +29,20 @@ test_SOURCES = tests/opendnssectest.c
 
 TESTS = $(check_PROGRAMS)
 
-%.o %.h : %.sql
-	if [ "`tail -c 1 $(<) | tr '\000' X`" != X -o \
-	     "`tail -c 1 $(<) | tr '\000' Y`" != Y ]; then \
-	  echo -n 0 | tr 0 '\000' >> $(<) ; \
+schema_mysql.o:	schema_mysql.sql
+	-if [ "`tail -c 1 schema_mysql.sql | tr '\000' X`" != X -o \
+	     "`tail -c 1 schema_mysql.sql | tr '\000' Y`" != Y ]; then \
+	  echo -n 0 | tr 0 '\000' >> schema_mysql.sql ; \
 	fi
-	objcopy --readonly-text -I binary -O elf64-x86-64 -B i386:x86-64 \
+	-objcopy --readonly-text -I binary -O elf64-x86-64 -B i386:x86-64 \
         --rename-section .data=.progmem.data,contents,alloc,load,readonly,data \
         --redefine-sym _binary_$*_sql_start=$* \
         --redefine-sym _binary_$*_sql_end=$*_end \
         --redefine-sym _binary_$*_sql_size=$*_size_sym \
-	$(<) $(*).o
-	echo "extern const char $(*)[];" > $(*).h
-	echo "extern const char $(*)_end[];" >> $(*).h
-	echo "extern const char $(*)_size_sym[];" >> $(*).h
-	echo "#define $(*)_size ((int)$(*)_size_sym)" >> $(*).h
+	schema_mysql.sql schema_mysql.o
+
+schema_mysql.h:	schema_mysql.o
+	echo "extern const char schema_mysql[];" >            schema_mysql.h
+	echo "extern const char schema_mysql_end[];"          >> schema_mysql.h
+	echo "extern const char schema_mysql_size_sym[];"     >> schema_mysql.h
+	echo "#define schema_mysql_size ((int)schema_mysql_size_sym)" >> schema_mysql.h

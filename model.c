@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <mysql/mysql.h>
-#include <schema_mysql.h>
+#include "schema_mysql.h"
 #include "dataset.h"
 
 struct zone;
@@ -94,13 +94,11 @@ int commandModelCreate(void)
     int status, count = 0;
     MYSQL_RES *result;
     MYSQL_ROW row;
-    const char *cmdsequence = schema_mysql;
     
     if (opendatabase())
         return 1;
 
-    printf(">> %s\n",cmdsequence);
-    if (mysql_query(mysql, cmdsequence)) {
+    if (mysql_query(mysql, schema_mysql)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
     }
