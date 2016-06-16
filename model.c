@@ -77,7 +77,7 @@ static int opendatabase()
     char *database = "test";
     mysql = mysql_init(NULL);
     if (!mysql_real_connect(mysql, server,
-            user, password, NULL, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
+            user, password, database, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
     }
