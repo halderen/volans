@@ -74,10 +74,10 @@ static int opendatabase()
     char *server = "localhost";
     char *user = "test";
     char *password = "test";
-    char *database = "ods";
+    char *database = "";
     mysql = mysql_init(NULL);
     if (!mysql_real_connect(mysql, server,
-            user, password, database, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
+            user, password, NULL, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
     }
