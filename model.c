@@ -72,8 +72,8 @@ static MYSQL *mysql;
 static int opendatabase()
 {
     char *server = "localhost";
-    char *user = "opendnssec";
-    char *password = "iuap";
+    char *user = "test";
+    char *password = "test";
     char *database = "ods";
     mysql = mysql_init(NULL);
     if (!mysql_real_connect(mysql, server,
@@ -96,11 +96,16 @@ int commandModelCreate(void)
     MYSQL_RES *result;
     MYSQL_ROW row;
     
-    if (opendatabase())
+    printf("GO\n");
+    if (opendatabase()) {
+    printf("BAD1\n");
+    fprintf(stderr,"BAD1\n");
         return 1;
+        }
 
     if (mysql_query(mysql, schema_mysql)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
+    printf("BAD2\n");
         return 1;
     }
     do {
@@ -127,6 +132,7 @@ int commandModelCreate(void)
     } while (status == 0);
 
     closedatabase();
+    printf("OKAY\n");
     return 0;
 }
 

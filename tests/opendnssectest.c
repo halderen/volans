@@ -31,9 +31,17 @@ testFail()
     CU_ASSERT(2 * 2 == 4);
 }
 
+extern int commandModelCreate(void);
+void
+testDatabaseCreate()
+{
+    CU_ASSERT(!commandModelCreate());
+}
+
 int
 main()
 {
+    int fails;
     CU_pSuite pSuite = NULL;
 
     /* Initialize the CUnit test registry */
@@ -54,14 +62,20 @@ main()
         return CU_get_error();
     }
 
+    if (!(CU_add_test(pSuite, "testDatabaseCreate", testDatabaseCreate))) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
 #ifdef NOTDEFINED
     /* Run all tests using the CUnit Basic interface */
-    /CU_basic_set_mode(CU_BRM_VERBOSE);
+    CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
 #endif
 
     CU_automated_run_tests();
 
+    fails = CU_get_number_of_tests_failed();
     CU_cleanup_registry();
-    return CU_get_error();
+    return fails;
 }

@@ -3,11 +3,6 @@ CLEANFILES=$(srcdir)/*~ schema_mysql.h
 
 ACLOCAL_AMFLAGS = -Im4
 
-test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
-#test_AM_LDLIBS = @CUNIT_LIBS@
-test_LDFLAGS = @MYSQL_LDFLAGS@
-test_LDADD = @CUNIT_LIBS@ -lmysqlclient
-
 opendnssec_CFLAGS = @MYSQL_CFLAGS@
 opendnssec_LDFLAGS = @MYSQL_LDFLAGS@
 opendnssecd_CFLAGS = @MYSQL_CFLAGS@
@@ -24,7 +19,12 @@ opendnssec_LDADD = schema_mysql.o
 opendnssecd_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
 opendnssecd_LDADD = schema_mysql.o
 
-test_SOURCES = tests/opendnssectest.c
+test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
+test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
+#test_AM_LDLIBS = @CUNIT_LIBS@
+test_LDFLAGS = @MYSQL_LDFLAGS@
+test_LDADD = @CUNIT_LIBS@ schema_mysql.o -lmysqlclient
+
 
 # opendnssec$(EXEEXT): opendnssec.c
 
