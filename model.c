@@ -6,65 +6,11 @@
 #include "schema_mysql.h"
 #include "dataset.h"
 
-struct zone;
-struct keyclass;
-struct keyinstance;
-struct policy;
-
-static dataset_t zones;
+struct settings;
 static dataset_t policies;
 
-struct zone {
-    char name[64];
-    char* label;
-    int inadapttype;
-    char* inadapturi;
-    int outadapttype;
-    int f1;
-    int f2;
-    int f3;
-    int f4;
-    time_t t1;
-    time_t t2;
-    time_t t3;
-    time_t t4;
-    time_t t5;
-    time_t t6;
-    time_t t7;
-    time_t t8;
-    struct policy* policy;
-    dataset_t keyinstances;
-};
-
-struct keyinstance {
-    int id;
-    char* locator;
-    struct zone* zone;
-    struct keyclass* keyclass;
-    time_t inception;
-    int state;
-    int dsstate;
-    time_t dsstatesince;
-    int ksstate;
-    time_t ksstatesince;
-    int rrsigstate;
-    time_t rrsigstatesince;
-    int kssigstate;
-    time_t kssigstatesince;
-};
-
-struct keyclass {
-    int id;
-    struct policy* policy;
-    int nbyt;
-    int algorithm;
-    int role;
-    time_t lifetime;
-};
-
-struct policy {
-    char name[64];
-    char *label;
+struct settings {
+    int dataVersion;
 };
 
 static MYSQL *mysql;
@@ -96,16 +42,12 @@ int commandModelCreate(void)
     MYSQL_RES *result;
     MYSQL_ROW row;
     
-    printf("GO\n");
     if (opendatabase()) {
-    printf("BAD1\n");
-    fprintf(stderr,"BAD1\n");
         return 1;
-        }
+    }
 
     if (mysql_query(mysql, schema_mysql)) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
-    printf("BAD2\n");
         return 1;
     }
     do {
@@ -132,7 +74,6 @@ int commandModelCreate(void)
     } while (status == 0);
 
     closedatabase();
-    printf("OKAY\n");
     return 0;
 }
 
@@ -146,7 +87,7 @@ int commandModelRead(void)
     if (opendatabase())
         return 1;
 
-    if (mysql_query(mysql, "select * from zones; select * from keyinstances; select * from keyclasses; select * from policies;")) {
+    if (mysql_query(mysql, "select * from properties;")) {
         fprintf(stderr, "%s\n", mysql_error(mysql));
         return 1;
     }
@@ -157,7 +98,7 @@ int commandModelRead(void)
             /* yes; process rows and free the result set */
             for (count = 0; (row = mysql_fetch_row(result)) != NULL; ++count) {
                 while ((field = mysql_fetch_field(result)) != NULL) {
-                    malloc(sizeof (struct zone));
+                    /* get the result */
                 }
             }
             printf("rows\t%d\n", count);

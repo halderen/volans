@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([opendnssec], [1.0], [http://opendnssec.org/])
+AC_INIT([volans], [1.0-dev], [http://github.org/halderen/volans/])
 
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
