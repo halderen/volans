@@ -63,13 +63,9 @@
       </compileType>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="dataset.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="scheduler.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -109,8 +105,6 @@
       </makefileType>
       <item path="dao.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="dataset.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
         <cTool flags="0">
         </cTool>
@@ -118,8 +112,6 @@
       <item path="scheduler.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="testpkcs11.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
       </item>
