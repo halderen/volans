@@ -20,7 +20,7 @@ static int opendatabase()
     char *server = "localhost";
     char *user = "test";
     char *password = "test";
-    char *database = "test";
+    char *database = NULL;
     mysql = mysql_init(NULL);
     if (!mysql_real_connect(mysql, server,
             user, password, database, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
