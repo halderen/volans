@@ -1,15 +1,12 @@
 AC_PREREQ([2.69])
 AC_INIT([volans], [1.0-dev], [http://github.org/halderen/volans/])
-
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
-ACX_PREFIXHACK
-
 AC_USE_SYSTEM_EXTENSIONS
-
+LT_INIT
+ACX_PREFIXHACK
 AC_CONFIG_SRCDIR([opendnssec.c])
 AC_CONFIG_HEADERS([config.h])
-
 AC_PROG_CC
 
 dnl CHECK_COMPILER_FLAG(std=c99, [C99FLAG="-std=c99"])
