@@ -3,6 +3,8 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 **/*~
+**/*.lo
+**/*.la
 configure
 depcomp
 install-sh
@@ -15,8 +17,8 @@ config.status
 **/*.o
 stamp-h1
 schema_mysql.h
-opendnssec
-opendnssecd
+volans
+volansd
 **/*-Results.xml
 test-driver
 **/*.log
@@ -24,3 +26,4 @@ test-driver
 test
 compile
 test.trs
+.libs

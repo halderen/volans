@@ -27,9 +27,7 @@ usage() {
 int
 main(int argc, char** argv)
 {
-    int status;
     int ch;
-    int i;
 
     /* Get the name of the program */
     if ((argv0 = strrchr(argv[0], '/')) == NULL)
