@@ -3,24 +3,26 @@ CLEANFILES=$(srcdir)/*~ schema_mysql.h
 
 ACLOCAL_AMFLAGS = -Im4
 
-volans_CFLAGS = @MYSQL_CFLAGS@ -D_REENTRANT
-volans_LDFLAGS = @MYSQL_LDFLAGS@
-volansd_CFLAGS = @MYSQL_CFLAGS@ -D_REENTRANT
-volansd_LDFLAGS = @MYSQL_LDFLAGS@
+volans_CFLAGS = @MYSQL_CFLAGS@ @SQLITE3_CFLAGS@ -D_REENTRANT
+volans_LDFLAGS = @MYSQL_LDFLAGS@ @SQLITE3_LDFLAGS@
 
 libvolans_la_SOURCES = model.c
 
 check_PROGRAMS = test
 lib_LTLIBRARIES = libvolans.la
 bin_PROGRAMS = volans
-sbin_PROGRAMS = volansd
+
+install-exec-hook:
+	ln $(DESTDIR)$(bindir)/volans$(EXEEXT) \
+	   $(DESTDIR)$(bindir)/volansd$(EXEEXT)
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(bindir)/volansd$(EXEEXT)
 
 BUILT_SOURCES = schema_mysql.h
 
 volans_SOURCES = volans.c model.c utilities.h schema_mysql.h schema_sqlite.h
 volans_LDADD = schema_mysql.o schema_sqlite.o
-volansd_SOURCES = volans.c model.c utilities.h schema_mysql.hschema_sqlite.h
-volansd_LDADD = schema_mysql.o schema_sqlite.o
 
 test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
 test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
