@@ -15,8 +15,9 @@ config.h.in
 config.status
 **/*.o
 stamp-h1
-opendnssec
-opendnssecd
+schema_*.h
+volans
+volansd
 **/*-Results.xml
 test-driver
 schema_mysql.h
