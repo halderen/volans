@@ -7,7 +7,6 @@ configure
 depcomp
 install-sh
 missing
-opendnssec.o
 .deps
 config.log
 config.h
@@ -20,7 +19,6 @@ volans
 volansd
 **/*-Results.xml
 test-driver
-schema_mysql.h
 **/*.log
 **/.dirstamp
 test
