@@ -20,6 +20,7 @@ AX_C___ATTRIBUTE__
 AM_PROG_CC_C_O
 
 AM_CONDITIONAL([WITH_CUNIT], [test "${with_cunit}" != "no" -a -n "$CUNIT_LIBS"])
+AX_LIB_SQLITE3
 AX_LIB_MYSQL()
 
 AC_CONFIG_FILES([Makefile])
