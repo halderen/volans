@@ -3,6 +3,8 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 **/*~
+**/*.lo
+**/*.la
 configure
 depcomp
 install-sh
@@ -24,3 +26,4 @@ test-driver
 test
 compile
 test.trs
+.libs
