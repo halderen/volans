@@ -17,10 +17,10 @@ sbin_PROGRAMS = volansd
 
 BUILT_SOURCES = schema_mysql.h
 
-volans_SOURCES = volans.c model.c utilities.h schema_mysql.h
-volans_LDADD = schema_mysql.o
-volansd_SOURCES = volans.c model.c utilities.h schema_mysql.h
-volansd_LDADD = schema_mysql.o
+volans_SOURCES = volans.c model.c utilities.h schema_mysql.h schema_sqlite.h
+volans_LDADD = schema_mysql.o schema_sqlite.o
+volansd_SOURCES = volans.c model.c utilities.h schema_mysql.hschema_sqlite.h
+volansd_LDADD = schema_mysql.o schema_sqlite.o
 
 test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
 test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
@@ -47,9 +47,3 @@ TESTS = $(check_PROGRAMS)
 	echo "extern const char " $(*)_end"[];" >> $(*).h
 	echo "extern const char " $(*)_size_sym"[];" >> $(*).h
 	echo "#define $(*)_size ((int)$(*)_size_sym)" >> $(*).h
-
-#schema_mysql.h:	schema_mysql.o
-#	echo "extern const char schema_mysql[];" >            schema_mysql.h
-#	echo "extern const char schema_mysql_end[];"          >> schema_mysql.h
-#	echo "extern const char schema_mysql_size_sym[];"     >> schema_mysql.h
-#	echo "#define schema_mysql_size ((int)schema_mysql_size_sym)" >> schema_mysql.h
