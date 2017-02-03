@@ -62,11 +62,6 @@ main()
         return CU_get_error();
     }
 
-    if (!(CU_add_test(pSuite, "testDatabaseCreate", testDatabaseCreate))) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
 #ifdef NOTDEFINED
     /* Run all tests using the CUnit Basic interface */
     CU_basic_set_mode(CU_BRM_VERBOSE);

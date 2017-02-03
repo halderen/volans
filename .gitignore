@@ -7,7 +7,6 @@ configure
 depcomp
 install-sh
 missing
-opendnssec.o
 .deps
 config.log
 config.h
@@ -15,11 +14,11 @@ config.h.in
 config.status
 **/*.o
 stamp-h1
+schema_mysql.h
 opendnssec
 opendnssecd
 **/*-Results.xml
 test-driver
-schema_mysql.h
 **/*.log
 **/.dirstamp
 test

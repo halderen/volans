@@ -4,10 +4,8 @@
 #include <string.h>
 #include <mysql/mysql.h>
 #include "schema_mysql.h"
-#include "dataset.h"
 
 struct settings;
-static dataset_t policies;
 
 struct settings {
     int dataVersion;
@@ -20,7 +18,7 @@ static int opendatabase()
     char *server = "localhost";
     char *user = "test";
     char *password = "test";
-    char *database = "test";
+    char *database = NULL;
     mysql = mysql_init(NULL);
     if (!mysql_real_connect(mysql, server,
             user, password, database, 0, NULL, CLIENT_MULTI_RESULTS | CLIENT_MULTI_STATEMENTS)) {
