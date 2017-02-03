@@ -17,9 +17,9 @@ sbin_PROGRAMS = volansd
 
 BUILT_SOURCES = schema_mysql.h
 
-volans_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
+volans_SOURCES = volans.c model.c utilities.h schema_mysql.h
 volans_LDADD = schema_mysql.o
-volansd_SOURCES = opendnssec.c model.c utilities.h schema_mysql.h
+volansd_SOURCES = volans.c model.c utilities.h schema_mysql.h
 volansd_LDADD = schema_mysql.o
 
 test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
@@ -28,7 +28,7 @@ test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
 test_LDFLAGS = @MYSQL_LDFLAGS@
 test_LDADD = @CUNIT_LIBS@ schema_mysql.o -lmysqlclient
 
-# opendnssec$(EXEEXT): opendnssec.c
+# opendnssec$(EXEEXT): volans.c
 
 TESTS = $(check_PROGRAMS)
 

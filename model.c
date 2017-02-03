@@ -4,10 +4,8 @@
 #include <string.h>
 #include <mysql/mysql.h>
 #include "schema_mysql.h"
-#include "dataset.h"
 
 struct settings;
-static dataset_t policies;
 
 struct settings {
     int dataVersion;

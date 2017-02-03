@@ -84,6 +84,7 @@ main(int argc, char** argv)
 #include <string.h>
 #include "pkcs11.h"
 
+#ifdef NOTDEFINED
 static CK_C_INITIALIZE_ARGS InitArgs = { NULL, NULL, NULL, NULL, CKF_OS_LOCKING_OK, NULL };
 static void* libhandle;
 static CK_FUNCTION_LIST_PTR pkcs11;
@@ -103,3 +104,5 @@ int openCryptModule() {
     table = NULL;
     dlclose(handle);
 }
+
+#endif
