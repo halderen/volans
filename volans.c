@@ -7,13 +7,10 @@
 static struct option command_options[] = {
     { "help", no_argument, NULL, 'h'},
     { "config", no_argument, NULL, 'c'},
-    { 0, 0, 0, 0}
-};
-
-static struct option daemon_options[] = {
-    { "help", no_argument, NULL, 'h'},
-    { "config", no_argument, NULL, 'c'},
-    { "no-daemon", no_argument, NULL, 'D'},
+    { "no-daemon", no_argument, NULL, 'd'},
+    { "daemon", no_argument, NULL, 'D'},
+    { "verbose", no_argument, NULL, 'v'},
+    { "version", no_argument, NULL, 'V'},
     { 0, 0, 0, 0}
 };
 
@@ -35,38 +32,23 @@ main(int argc, char** argv)
     else
         ++argv0;
 
+    while ((ch = getopt_long(argc, argv, "+hc", command_options, NULL)) >= 0) {
+        switch (ch) {
+            case 'h':
+                usage(argv[0]);
+                return EXIT_SUCCESS;
+            case '?':
+                return EXIT_FAILURE;
+            default:
+                usage(argv[0]);
+                return EXIT_FAILURE;
+        };
+    }
+    if (optind < argc) {
+        fprintf(stderr, "%s: unrecognized command line arguments.\n", argv0);
+    }
     if (!strcmp(argv0, "volans")) {
-        while ((ch = getopt_long(argc, argv, "+hc", command_options, NULL)) >= 0) {
-            switch (ch) {
-                case 'h':
-                    usage(argv[0]);
-                    return EXIT_SUCCESS;
-                case '?':
-                    return EXIT_FAILURE;
-                default:
-                    usage(argv[0]);
-                    return EXIT_FAILURE;
-            };
-        }
-        if (optind < argc) {
-            fprintf(stderr, "%s: unrecognized command line arguments.\n", argv0);
-        }
     } else if (!strcmp(argv0, "volansd")) {
-        while ((ch = getopt_long(argc, argv, "hcD", daemon_options, NULL)) >= 0) {
-            switch (ch) {
-                case 'h':
-                    usage(argv[0]);
-                    return EXIT_SUCCESS;
-                case '?':
-                    return EXIT_FAILURE;
-                default:
-                    usage(argv[0]);
-                    return EXIT_FAILURE;
-            };
-        }
-        if (optind < argc) {
-            fprintf(stderr, "%s: unrecognized command line arguments.\n", argv0);
-        }
     } else {
         fprintf(stderr, "%s: bad command line invocation; executable name %s not recognized.\n", argv[0], argv0);
         return EXIT_FAILURE;
