@@ -7,10 +7,10 @@ volans_CFLAGS = @MYSQL_CFLAGS@ @SQLITE3_CFLAGS@ -D_REENTRANT -O2
 #volans_LDFLAGS = @MYSQL_LDFLAGS@ @SQLITE3_LDFLAGS@
 volans_LDFLAGS = @MYSQL_LDFLAGS@ @LDNS_LIBS@ -levent -ldl
 
-libvolans_la_SOURCES = model.c
+# libvolans_la_SOURCES = model.c
 
 check_PROGRAMS = test
-lib_LTLIBRARIES = libvolans.la
+# lib_LTLIBRARIES = libvolans.la
 bin_PROGRAMS = volans
 
 install-exec-hook:
@@ -23,19 +23,26 @@ uninstall-hook:
 BUILT_SOURCES = schema_mysql.h
 EXTRA_DIST = schema_mysql.sql schema_sqlite.sql
 
-volans_SOURCES = volans.c model.c utilities.c utilities.h backend.h \
-                 schema_sqlite.h backendsqlite.c daemonize.c \
-                 schema_mysql.h backendmysql.c cmdhandler.c cmdhandler.h \
+volans_SOURCES = volans.c utilities.c utilities.h backend.h \
+                 daemonize.c cmdhandler.c cmdhandler.h \
                  marshalling.c httpd.c rpc.c httpd.h proto.h \
                  iterator.c iteratorgeneric.c iteratorarray.c \
                  dictionary.c views.c table.c commitlog.c index.c \
                  zoneinput.c zoneoutput.c zonesign.c zonesignrecord.c names.c \
                  uthash.h utarray.h utmm.h utstring.h utlist.h \
-                 utringbuffer.h utvector.h pkcs11.h
+                 utringbuffer.h utvector.h pkcs11.h \
+                 backendsqlite.c backendmysql.c
+
+if USE_SQLITE3
+volans_SOURCES += schema_sqlite.h
+endif
+if USE_MYSQL
+volans_SOURCES += schema_mysql.h
+endif
 
 volans_LDADD = schema_mysql.o schema_sqlite.o $(LIBCURL)
 
-test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
+test_SOURCES = tests/opendnssectest.c schema_mysql.h
 test_CFLAGS = @CUNIT_INCLUDES@ @MYSQL_CFLAGS@
 #test_AM_LDLIBS = @CUNIT_LIBS@
 test_LDFLAGS = @MYSQL_LDFLAGS@

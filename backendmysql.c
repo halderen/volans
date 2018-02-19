@@ -3,11 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_MYSQL
 #include <mysql.h>
+#endif
 #include <dlfcn.h>
 #include "utilities.h"
 #include "backend.h"
+#ifdef HAVE_MYSQL
 #include "schema_mysql.h"
+#endif
+
+#ifdef HAVE_MYSQL
 
 struct connection_struct {
     void* dlhandle;
@@ -70,3 +76,15 @@ mysqlRegister(void)
 
     return backend;
 }
+
+#else
+
+struct backend
+mysqlRegister(void)
+{
+    struct backend backend;
+    memset(backend, 0, sizeof(struct backend));
+    return backend;
+}
+
+#endif

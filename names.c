@@ -48,10 +48,16 @@ names_docreate(struct names_struct** zoneptr, const char* apex, const char* pers
     }
 
     if(status && zone->source != NULL) {
-        zone->apex = NULL;
+        if(zone->apex != NULL) {
+            free(zone->apex);
+            zone->apex = NULL;
+        }
         readzone(zone->inputview, PLAIN, zone->source, &zone->apex, NULL);
         if (names_viewcommit(zone->inputview)) {
             return -1;
+        }
+        if(zone->apex == NULL) {
+            zone->apex = strdup(apex);
         }
     }
   

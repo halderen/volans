@@ -9,7 +9,7 @@
 #include <ldns/ldns.h>
 #include "proto.h"
 
-static struct names_struct* zone;
+static struct names_struct* zone = NULL;
 static int serial;
 
 struct names_struct* getzone(char* apex)
@@ -26,7 +26,6 @@ struct names_struct* getzone(char* apex)
     return zone;
 #endif
 }
-
 
 static void
 handler(struct evhttp_request *req, void *arg)

@@ -3,11 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_SQLITE3
 #include <sqlite3.h>
+#endif
 #include <dlfcn.h>
 #include "utilities.h"
 #include "backend.h"
+#ifdef HAVE_SQLITE3
 #include "schema_sqlite.h"
+#endif
+
+#ifdef HAVE_SQLITE3
 
 struct connection_struct {
     void* dlhandle;
@@ -325,3 +331,15 @@ sqliteRegister(void)
 
     return backend;
 }
+
+#else
+
+struct backend
+sqliteRegister(void)
+{
+    struct backend backend;
+    memset(backend, 0, sizeof(struct backend));
+    return backend;
+}
+
+#endif

@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([volans], [0.1-dev], [http://github.org/halderen/volans/])
+AC_INIT([volans], [0.2-dev], [http://github.org/halderen/volans/])
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
@@ -27,6 +27,9 @@ ACX_LDNS(1,6,17)
 ACX_LIBMICROHTTPD
 ACX_LIBJANSSON
 LIBCURL_CHECK_CONFIG
+
+AM_CONDITIONAL([USE_MYSQL],[grep HAVE_MYSQL confdefs.h > /dev/null])
+AM_CONDITIONAL([USE_SQLITE3],[grep HAVE_SQLITE3 confdefs.h > /dev/null])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
