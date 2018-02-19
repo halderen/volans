@@ -5,26 +5,61 @@
     <Elem>.</Elem>
   </sourceRootList>
 -->
-<configurationDescriptor version="95">
+<configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="uthash" projectFiles="true">
+        <itemPath>libut.h</itemPath>
+        <itemPath>ringbuf.h</itemPath>
+        <itemPath>utarray.h</itemPath>
+        <itemPath>uthash.h</itemPath>
+        <itemPath>utlist.h</itemPath>
+        <itemPath>utmm.h</itemPath>
+        <itemPath>utringbuffer.h</itemPath>
+        <itemPath>utstring.h</itemPath>
+        <itemPath>utvector.h</itemPath>
+      </logicalFolder>
+      <itemPath>backend.h</itemPath>
+      <itemPath>cmdhandler.h</itemPath>
       <itemPath>data.h</itemPath>
+      <itemPath>experiment.h</itemPath>
+      <itemPath>opendnssec.h</itemPath>
+      <itemPath>proto.h</itemPath>
       <itemPath>utilities.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
       <itemPath>schema-mysql.sql</itemPath>
+      <itemPath>schema_sqlite.sql</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>backendmysql.c</itemPath>
+      <itemPath>backendsqlite.c</itemPath>
+      <itemPath>cmdhandler.c</itemPath>
+      <itemPath>commitlog.c</itemPath>
       <itemPath>daemonize.c</itemPath>
-      <itemPath>dao.c</itemPath>
-      <itemPath>opendnssec.c</itemPath>
-      <itemPath>scheduler.c</itemPath>
+      <itemPath>dictionary.c</itemPath>
+      <itemPath>experiment.c</itemPath>
+      <itemPath>httpd.c</itemPath>
+      <itemPath>index.c</itemPath>
+      <itemPath>iterator.c</itemPath>
+      <itemPath>marshalling.c</itemPath>
+      <itemPath>model.c</itemPath>
+      <itemPath>/home/berry/volans/names.c</itemPath>
+      <itemPath>/home/berry/volans/rpc.c</itemPath>
+      <itemPath>table.c</itemPath>
+      <itemPath>utilities.c</itemPath>
+      <itemPath>views.c</itemPath>
+      <itemPath>volans.c</itemPath>
+      <itemPath>zoneinput.c</itemPath>
+      <itemPath>zoneoutput.c</itemPath>
+      <itemPath>zonesign.c</itemPath>
+      <itemPath>zonesignrecord.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -48,9 +83,14 @@
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile</itemPath>
+      <itemPath>Makefile.am</itemPath>
       <itemPath>configure</itemPath>
+      <itemPath>configure.ac</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>/home/berry/volans</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="Debug" type="1">
@@ -61,13 +101,81 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="dao.c" ex="false" tool="0" flavor2="0">
+      <item path="/home/berry/volans/names.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="scheduler.c" ex="false" tool="0" flavor2="0">
+      <item path="/home/berry/volans/rpc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="backend.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="backendmysql.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="backendsqlite.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cmdhandler.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cmdhandler.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="commitlog.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="dictionary.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="experiment.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="experiment.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="httpd.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="index.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="iterator.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libut.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="marshalling.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="model.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="opendnssec.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="proto.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ringbuf.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="schema_sqlite.sql" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="table.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="utarray.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="uthash.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utilities.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utmm.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utringbuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utstring.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utvector.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="views.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="volans.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zoneinput.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zoneoutput.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zonesign.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zonesignrecord.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
     <conf name="Default" type="0">
@@ -76,9 +184,6 @@
         <dependencyChecking>false</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
-      <flagsDictionary>
-        <element flagsID="0" commonFlags="-g -O2"/>
-      </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
       <makefileType>
@@ -102,18 +207,86 @@
             </incDir>
           </ccTool>
         </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
       </makefileType>
-      <item path="dao.c" ex="false" tool="0" flavor2="0">
+      <item path="/home/berry/volans/names.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
-        <cTool flags="0">
-        </cTool>
+      <item path="/home/berry/volans/rpc.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="scheduler.c" ex="false" tool="0" flavor2="0">
+      <item path="backend.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="backendmysql.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="backendsqlite.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cmdhandler.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cmdhandler.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="commitlog.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="dictionary.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="experiment.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="experiment.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="httpd.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="index.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="iterator.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libut.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="marshalling.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="model.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="opendnssec.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="proto.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ringbuf.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="schema-mysql.sql" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="schema_sqlite.sql" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="table.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="utarray.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="uthash.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utilities.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="utilities.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utmm.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utringbuffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utstring.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utvector.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="views.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="volans.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zoneinput.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zoneoutput.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zonesign.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="zonesignrecord.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
   </confs>

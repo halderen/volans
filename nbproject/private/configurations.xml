@@ -5,7 +5,7 @@
     <Elem>.</Elem>
   </sourceRootList>
 -->
-<configurationDescriptor version="95">
+<configurationDescriptor version="100">
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="Debug" type="1">

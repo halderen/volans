@@ -1,5 +1,5 @@
-#ifndef _UTILITIES_H_
-#define _UTILITIES_H_
+#ifndef UTILITIES_H
+#define UTILITIES_H
 
 #ifdef NOTDEFINED
 #error "never define NOTDEFINED"
@@ -48,5 +48,12 @@ extern void diagnostic_print(char *fmt, ...)
   abort(); }} while(0)
 
 extern char* argv0;
+
+typedef void (*functioncast_t)(void);
+extern functioncast_t functioncast(void*generic);
+
+unsigned long long int rnd(void);
+
+int mark(char* message);
 
 #endif
