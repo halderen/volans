@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #include "utilities.h"
 
 functioncast_t
@@ -42,6 +43,7 @@ static intptr_t markbrk;
 int
 mark(char* message)
 {
+#ifdef NOTDEFINED
     time_t t;
     intptr_t b;
     if(markcount == 0) {
@@ -53,5 +55,6 @@ mark(char* message)
     }
     fprintf(stderr, "MARK#%02d %2ld %4ld %s\n", markcount, t-marktime, (b-markbrk+1048576/2)/1048576, message);
     ++markcount;
+#endif
     return 0;
 }

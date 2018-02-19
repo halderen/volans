@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <ldns/ldns.h>
 #include <microhttpd.h>
+#include <curl/curl.h>
 #include "utilities.h"
 #include "backend.h"
 #include "cmdhandler.h"
@@ -49,11 +50,13 @@ usage(char* argv0path)
 int
 main(int argc, char** argv)
 {
+    int exitstatus = EXIT_SUCCESS;
     int ch;
     int optionServer;
     int optionDaemonize;
     struct http_listener_struct listenerconfig;
     struct httpd *httpd;
+    char* url = NULL;
 
     /* Get the name of the program */
     if ((argv0 = strrchr(argv[0], '/')) == NULL)
@@ -98,67 +101,112 @@ main(int argc, char** argv)
                 return EXIT_FAILURE;
         };
     }
-    if (optind < argc) {
+    /*if (optind < argc) {
         fprintf(stderr, "%s: unrecognized command line arguments.\n", argv0);
-    }
+    }*/
  
     if(optionServer) {
-        mark("cmdhandler_initialize");
+        if(optionDaemonize)
+            daemonize();
         cmdhandler_initialize();
-        mark("httpd_create");
         listenerconfig.count = 0;
         listenerconfig.interfaces = NULL;
         /* IPv4 addesses needs be placed first */
         http_listener_push(&listenerconfig, "0.0.0.0", AF_INET, "8000", NULL, NULL);
         http_listener_push(&listenerconfig, "::0", AF_INET6, "8000", NULL, NULL);
         httpd = httpd_create(&listenerconfig);
-        mark("httpd_start");
         httpd_start(httpd);
-        mark("cmdhandler_run");
         cmdhandler_run();
-        mark("httpd_stop");
         httpd_stop(httpd);
-        mark("httpd_destroy");
         httpd_destroy(httpd);
-        mark("cmdhandler_finalize");
         cmdhandler_finalize();
     } else {
-        mark("names_docreate");
-        struct names_struct* names = names_docreate("example");
-        mark("names_dofull");
-        names_dofull(names, 2017101705);
-        mark("names_docycle");
-        names_docycle(names, 2017101706);
-        mark("names_dodestroy");
-        names_dodestroy(names);
+        CURL *curl = curl_easy_init();
+        CURLcode result;
+        if(!strcmp(argv[1],"exit")) {
+            curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/exit");
+        } else if(!strcmp(argv[1],"zone")) {
+            switch(argc) {
+                case 0:
+                case 1:
+                case 2:
+                    fprintf(stderr,"argument zone apex missing\n");
+                    break;
+                case 3:
+                    asprintf(&url,"http://localhost:8080/zone?apex=%s",argv[2]);
+                    break;
+                case 4:
+                    asprintf(&url,"http://localhost:8080/zone?apex=%s&persist=%s",argv[2],argv[3]);
+                    break;
+                case 5:
+                    asprintf(&url,"http://localhost:8080/zone?apex=%s&persist=%s&input=%s",argv[2],argv[3],argv[4]);
+                    break;
+                default:
+                    fprintf(stderr,"bad number of argument\n");
+            }
+        } else if(!strcmp(argv[1],"sign")) {
+            switch(argc) {
+                case 0:
+                case 1:
+                case 2:
+                    fprintf(stderr,"argument new serial missing\n");
+                    break;
+                case 3:
+                    asprintf(&url,"http://localhost:8080/sign?serial=%d",atoi(argv[2]));
+                    break;
+                case 4:
+                    asprintf(&url,"http://localhost:8080/cycle?serial=%d&output=%s",atoi(argv[2]),argv[3]);
+                    break;
+                default:
+                    fprintf(stderr,"bad number of argument\n");
+            }
+        } else if(!strcmp(argv[1],"cycle")) {
+            switch(argc) {
+                case 0:
+                case 1:
+                case 2:
+                    asprintf(&url,"http://localhost:8080/cycle");
+                    break;
+                case 3:
+                    asprintf(&url,"http://localhost:8080/cycle?output=%s",argv[2]);
+                    break;
+                default:
+                    fprintf(stderr,"bad number of argument\n");
+            }
+        } else if(!strcmp(argv[1],"output")) {
+            switch(argc) {
+                case 0:
+                case 1:
+                case 2:
+                    fprintf(stderr,"argument output missing\n");
+                    break;
+                case 3:
+                    asprintf(&url,"http://localhost:8080/output?output=%s",argv[2]);
+                    break;
+                default:
+                    fprintf(stderr,"bad number of argument\n");
+            }
+        } else if(!strcmp(argv[1],"persist")) {
+            switch(argc) {
+                case 0:
+                case 1:
+                case 2:
+                    asprintf(&url,"http://localhost:8080/persist");
+                    break;
+                default:
+                    fprintf(stderr,"bad number of argument\n");
+            }
+        } else {
+            fprintf(stderr,"unknown argument\n");
+        }
+        if(url)
+            curl_easy_setopt(curl, CURLOPT_URL, url);
+        result = curl_easy_perform(curl);
+        if(result != CURLE_OK) {
+            fprintf(stderr,"failed\n");
+            exitstatus = EXIT_FAILURE;
+        }
+        curl_easy_cleanup(curl);
     }
-    return EXIT_SUCCESS;
-}
-
-void submittask();
-void ensuretask();
-void performtask();
-void looptasks();
-void addzone(struct names_struct* zone);
-struct names_struct* getzone(char* apex)
-{
-#ifdef NOTDEFINED
-    zone_type *zone = zonelist_lookup_zone_by_name(httpd* engine->zonelist, rpc->zone,
-        LDNS_RR_CLASS_IN);
-    if (!zone) {
-        rpc->status = RPC_RESOURCE_NOT_FOUND;
-        return 0;
-    }
-#endif
-}
-
-#include <curl/curl.h>
-
-docall()
-{
-    CURLcode result;
-    CURL *curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/exit");
-    result = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
+    return exitstatus;
 }

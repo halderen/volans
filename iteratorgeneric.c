@@ -8,38 +8,9 @@ struct names_iterator_struct {
     int (*iterate)(names_iterator*iter, void**);
     int (*advance)(names_iterator*iter, void**);
     int (*end)(names_iterator*iter);
-
     int itemcnt, itemmax, itemidx, itemsiz;
     char* items;
 };
-
-int
-names_iterate(names_iterator*iter, void* item)
-{
-    if(*iter)
-        return (*iter)->iterate(iter, (void**)item);
-    else
-        return 0;
-}
-
-int
-names_advance(names_iterator*iter, void* item)
-{
-    if(*iter)
-        return (*iter)->advance(iter, (void**)item);
-    else
-        return 0;
-}
-
-int
-names_end(names_iterator*iter)
-{
-    if(*iter)
-        return (*iter)->end(iter);
-    else
-        return 0;
-}
-
 
 static int
 iterateimpl(names_iterator* iter, void** item)
@@ -87,7 +58,7 @@ endimpl(names_iterator*iter)
 }
 
 names_iterator
-generic_iterator(size_t size)
+names_iterator_create(size_t size)
 {
     names_iterator iter;
     iter = malloc(sizeof(struct names_iterator_struct));
@@ -103,7 +74,7 @@ generic_iterator(size_t size)
 }
 
 void
-generic_add(names_iterator i, void* ptr)
+names_iterator_add(names_iterator i, void* ptr)
 {
     if(i->itemcnt == i->itemmax) {
         i->itemmax *= 2;

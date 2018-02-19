@@ -122,16 +122,15 @@ signrecord(struct signconf* signconf, dictionary record)
 {
     names_iterator typeiter;
     names_iterator dataiter;
-    struct item item;
+    struct item* item;
     const char* recordname;
     const char* recordinfo;
     char* recordtype;
     char* recorddata;
-    ldns_rdf* datardf;
-    ldns_rr_type rrtype;
     ldns_rr* rr;
     ldns_rr_list* rrset;
     ldns_rr_list* rrsignatures;
+    ldns_rr_type rrtype;
     char** signatures;
     int nsignatures, signaturesidx;
 
@@ -147,24 +146,13 @@ signrecord(struct signconf* signconf, dictionary record)
         rrset = ldns_rr_list_new();
         rrtype = ldns_get_rr_type_by_name(recordtype);
         for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
-            recorddata = item.data;
-            recordinfo = item.info;
-            
-            /*rr = ldns_rr_new_frm_type(rrtype);
-            datardf = ldns_rdf_new_frm_str(rrtype, data);
-            ldns_rr_set_rdf(rr, datardf, 0); //FIXME other r fields, ttl, origin, class
-            */
-            
+            recorddata = item->data;
+            recordinfo = item->info;
             sprintf(s, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
-            if(!strcmp(recordtype, "SOA")) { // FIXME
-                sprintf(s, "example. SOA ns1.example. postmaster.example. ( 1001 9000 4500 1209600 3600 )");
-            }
-
             err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
             assert(err == LDNS_STATUS_OK);
-            
             ldns_rr_list_push_rr(rrset, rr);
-        }
+        }        
         rrsignatures = ldns_sign_public(rrset, signconf->keylist);
         nsignatures = ldns_rr_list_rr_count(rrsignatures);
         signatures = malloc(sizeof(char*)*nsignatures);
@@ -175,12 +163,12 @@ signrecord(struct signconf* signconf, dictionary record)
         }
         ldns_rr_list_deep_free(rrset);
         ldns_rr_list_deep_free(rrsignatures);
-        // FIXME names_recordsetsignatures(record, signatures);
+
         free(signatures);
     }
 }
 
-void
+char*
 signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ldns_rr_list* rrset)
 {
     unsigned int i;
@@ -319,6 +307,8 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
 
     free(data);
     ldns_buffer_free(buffer);
+
+    return signature;
 }
 
 static CK_C_INITIALIZE_ARGS initializationArgs = { NULL, NULL, NULL, NULL, CKF_OS_LOCKING_OK, NULL };
@@ -326,7 +316,7 @@ static CK_C_INITIALIZE_ARGS initializationArgs = { NULL, NULL, NULL, NULL, CKF_O
 void
 initializesignconfkey(struct signconfkey* signing)
 {
-    const char* solibrary = "/home/berry/netlabs/lib/libsofthsm2.so";
+    const char* solibrary = "/home/berry/netlabs/lib/libsofthsm2.so"; // FIXME
     const char* locator = "e5983eddbe98fafd03130122bd04c6ea";
     const char* passphrase = "0000";
     int algorithm = 8;
@@ -453,3 +443,43 @@ keytag(struct signconf* signconf, struct signconfkey* signconfkey)
     signconfkey->dnskey = dnskey;
 }
 
+void
+signrecord2(struct signconf* signconf, dictionary record, char* apex)
+{
+    names_iterator typeiter;
+    names_iterator dataiter;
+    struct item* item;
+    int i;
+    const char* recordname;
+    const char* recordinfo;
+    char* recordtype;
+    char* recorddata;
+    ldns_rr* rr;
+    ldns_rr_list* rrset;
+    char* signature;
+
+    char s[10240];
+    ldns_rdf* origin;
+    uint32_t defaultttl = 60;
+    ldns_status err;
+    origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
+    
+    getset(record, "name", &recordname, NULL);
+    
+    for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
+        rrset = ldns_rr_list_new();
+        for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
+            recorddata = item->data;
+            recordinfo = item->info;
+            sprintf(s, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
+            err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
+            assert(err == LDNS_STATUS_OK);
+            ldns_rr_list_push_rr(rrset, rr);
+        }
+        for(i=0; i<signconf->nkeys; i++) {
+            signature = signrecordpartial(signconf, &signconf->keys[i], rrset);
+            names_recordsetsignature(record, recordtype, signature);
+            free(signature);
+        }
+    }
+}

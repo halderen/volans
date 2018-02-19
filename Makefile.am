@@ -1,5 +1,5 @@
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
-CLEANFILES=$(srcdir)/*~ schema_mysql.h
+CLEANFILES=$(srcdir)/*~ schema_mysql.h core* vgcore*
 
 ACLOCAL_AMFLAGS = -Im4
 
@@ -23,10 +23,11 @@ uninstall-hook:
 BUILT_SOURCES = schema_mysql.h
 
 volans_SOURCES = volans.c model.c utilities.c utilities.h backend.h \
-                 schema_sqlite.h backendsqlite.c \
+                 schema_sqlite.h backendsqlite.c daemonize.c \
                  schema_mysql.h backendmysql.c cmdhandler.c \
                  marshalling.c httpd.c rpc.c httpd.h \
-                 iterator.c dictionary.c views.c table.c commitlog.c index.c \
+                 iterator.c iteratorgeneric.c iteratorarray.c \
+                 dictionary.c views.c table.c commitlog.c index.c \
                  zoneinput.c zoneoutput.c zonesign.c zonesignrecord.c names.c
 volans_LDADD = schema_mysql.o schema_sqlite.o $(LIBCURL)
 

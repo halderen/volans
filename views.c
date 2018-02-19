@@ -305,7 +305,7 @@ persistfn(names_table_type table, marshall_handle store)
 }
 
 int
-names_viewrestore(names_view_type view, const char* apex, int basefd, char* filename)
+names_viewrestore(names_view_type view, const char* apex, int basefd, const char* filename)
 {
     int fd;
     dictionary record;
@@ -412,11 +412,11 @@ noexpiry(names_view_type view)
     dictionary record;
     names_iterator iter;
     names_iterator result;
-    result = generic_iterator(sizeof(struct dual));
+    result = names_iterator_create(sizeof(struct dual));
     for (iter=names_indexiterator(view->indices[1]); names_iterate(&iter,&record); names_advance(&iter,NULL)) {
         entry.dst = record;
         entry.src = names_indexlookup(view->indices[2], record);
-        generic_add(result,&entry);
+        names_iterator_add(result,&entry);
     }
     return result;
 }
@@ -429,11 +429,11 @@ neighbors(names_view_type view)
     dictionary record;
     names_iterator iter;
     names_iterator result;
-    result = generic_iterator(sizeof(struct dual));
+    result = names_iterator_create(sizeof(struct dual));
     for (iter=names_indexiterator(view->indices[1]); names_iterate(&iter,&record); names_advance(&iter,NULL)) {
         entry.dst = record;
         entry.src = names_indexlookup(view->indices[2], record);
-        generic_add(result,&entry);
+        names_iterator_add(result,&entry);
     }
     return result;
 }
@@ -444,9 +444,9 @@ expiring(names_view_type view)
     dictionary record;
     names_iterator iter;
     names_iterator result;
-    result = generic_iterator(sizeof(dictionary));
+    result = names_iterator_create(sizeof(dictionary));
     for (iter=names_indexiterator(view->indices[0]); names_iterate(&iter,&record); names_advance(&iter,NULL)) {
-        generic_add(result, &record);
+        names_iterator_add(result, &record);
     }
     return result;
 }

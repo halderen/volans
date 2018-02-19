@@ -16,45 +16,47 @@
 
 #pragma GCC optimize ("O0")
 
-struct names_struct*
-names_docreate(char* name)
+int
+names_docreate(struct names_struct** zoneptr, const char* apex, const char* persist, const char* input)
 {
+    struct names_struct* zone = *zoneptr;
     const char* baseviewkeys[] = { "namerevision", NULL};
     const char* inputviewkeys[] = { "nameupcoming", "namehierarchy", NULL};
     const char* prepareviewkeys[] = { "namerevision", "namenoserial", "namenewserial", NULL};
     const char* signviewkeys[] = { "nameready", "expiry", "denialname", NULL};
     const char* outputviewkeys[] = { "validnow", NULL};
-    int status;
-    struct names_struct* names;
+    int status = 0;
 
-    names = malloc(sizeof(struct names_struct));
-    names->basefd = open(".", O_PATH, 07777);
-    names->source = strdup(name);
-    names->apex = strdup(name);
-
-    names->baseview = names_viewcreate(NULL, "  base    ", baseviewkeys);
-    mark("created base view");
-
-    status = names_viewrestore(names->baseview, names->apex, names->basefd, "storage");
-    mark("restored base view");
-
-    names->inputview = names_viewcreate(names->baseview,   "  input   ", inputviewkeys);
-    names->prepareview = names_viewcreate(names->baseview, "  prepare ", prepareviewkeys);
-    names->signview = names_viewcreate(names->baseview,    "  sign    ", signviewkeys);
-    names->outputview = names_viewcreate(names->baseview,  "  output  ", outputviewkeys);
-    mark("created other view");
-
-
-    if(status) {
-        names->apex = NULL;
-        readzone(names->inputview, PLAIN, names->source, &names->apex, NULL);
-        mark("read zone");
-        if (names_viewcommit(names->inputview)) {
-            abort();
-        }
-        mark("commit read");
+    if(!*zoneptr) {
+        zone = malloc(sizeof(struct names_struct));
+        zone->basefd = open(".", O_PATH, 07777);
+        zone->apex = strdup(apex);
+        zone->source = NULL;
+        zone->persist = strdup(persist);
     }
-    return names;
+    if (input) {
+        zone->source = strdup(input);
+    }
+
+    if(!*zoneptr) {
+        zone->baseview = names_viewcreate(NULL, "  base    ", baseviewkeys);
+        status = names_viewrestore(zone->baseview, zone->apex, zone->basefd, persist);
+        zone->inputview = names_viewcreate(zone->baseview,   "  input   ", inputviewkeys);
+        zone->prepareview = names_viewcreate(zone->baseview, "  prepare ", prepareviewkeys);
+        zone->signview = names_viewcreate(zone->baseview,    "  sign    ", signviewkeys);
+        zone->outputview = names_viewcreate(zone->baseview,  "  output  ", outputviewkeys);
+    }
+
+    if(status && zone->source != NULL) {
+        zone->apex = NULL;
+        readzone(zone->inputview, PLAIN, zone->source, &zone->apex, NULL);
+        if (names_viewcommit(zone->inputview)) {
+            return -1;
+        }
+    }
+  
+    *zoneptr = zone;
+    return 0;
 }
 
 void
@@ -62,7 +64,7 @@ names_dodestroy(struct names_struct* names)
 {
     names_viewreset(names->baseview);
     mark("base updated");
-    names_viewpersist(names->baseview, names->basefd, "storage");
+    names_viewpersist(names->baseview, names->basefd, names->persist);
     mark("base persisted");
 
     names_viewdestroy(names->inputview);
@@ -75,55 +77,34 @@ names_dodestroy(struct names_struct* names)
 }
 
 void
-names_dofull(struct names_struct* names, int serial)
+names_docycle(struct names_struct* names, int* serial, const char* filename)
 {
-    names_viewreset(names->prepareview);
-    prepare(names->prepareview, serial);
-    if (names_viewcommit(names->prepareview)) {
-        abort();
+    if(serial) {
+        names_viewreset(names->prepareview);
+        prepare(names->prepareview, serial);
+        if (names_viewcommit(names->prepareview)) {
+            abort();
+        }
+        mark("signing");
+        names_viewreset(names->signview);
+        mark("sign updated");
+        sign(names->signview);
+        mark("sign signed");
+        if (names_viewcommit(names->signview)) {
+            abort();
+        }
+        mark("sign committed");
     }
-    mark("prepared");
-    mark("signing");
-    names_viewreset(names->signview);
-    mark("sign updated");
-    sign(names->signview);
-    mark("sign signed");
-    if (names_viewcommit(names->signview)) {
-        abort();
+    if(filename) {
+        names_viewreset(names->outputview);
+        mark("persist view");
+        writezone(names->outputview, filename, names->apex, NULL);
     }
-    mark("sign committed");
-    names_viewreset(names->outputview);
-    mark("persist view");
-    writezone(names->outputview, "example.2", names->apex, NULL);
-    names_viewpersist(names->baseview, names->basefd, "storage");
 }
 
 void
-names_docycle(struct names_struct* names, int serial)
+names_dopersist(struct names_struct* names)
 {
-    names_viewreset(names->inputview); /* FIXME not having this causes a conflict which is not necessary */
-    readzone(names->inputview, DELTAMINUS, "example.delta", &names->apex, NULL);
-    mark("read delta");
-    if (names_viewcommit(names->inputview)) {
-        abort();
-    }
-    mark("commit delta");
-    names_viewreset(names->prepareview);
-    prepare(names->prepareview, serial);
-    if (names_viewcommit(names->prepareview)) {
-        abort();
-    }    
-    mark("signing");
-    names_viewreset(names->signview);
-    mark("sign updated");
-    sign(names->signview);
-    mark("sign signed");
-    if (names_viewcommit(names->signview)) {
-        abort();
-    }
-    mark("sign committed");
-    names_viewreset(names->outputview);
-
-    mark("persist view");
-    writezone(names->outputview, "example.2", names->apex, NULL);
+    names_viewreset(names->baseview);
+    names_viewpersist(names->baseview, names->basefd, names->persist);
 }

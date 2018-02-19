@@ -12,7 +12,7 @@
 
 extern void *argv0;
 
-void
+int
 daemonize(char *directory)
 {
     int status = 0;
@@ -47,22 +47,24 @@ daemonize(char *directory)
         }
     }
     umask(027);
+    return status;
 }
 
+void
 initialize()
 {
     openlog(argv0, LOG_NDELAY, LOG_DAEMON);
 }
 
+void
 finalize() {
     closelog();
 }
 
-void
-log(void*, char *message)
 __attribute__((__format__(__printf__, 2, 3)))
+void
+log(void* class, char *message, ...)
 {
-    char *message;
     syslog(LOG_ERR, message);
 }
 
@@ -75,7 +77,7 @@ drop(char *username, char* groupname)
     if (username != NULL) {
         userinfo = getpwnam(username);
         if (userinfo) {
-            if (setuid(userinfo.pw_uid)) {
+            if (setuid(userinfo->pw_uid)) {
                 status = -1;
                 /* log error */
             }
@@ -91,7 +93,7 @@ drop(char *username, char* groupname)
             /* log error */
         }
     }
-    if (group != NULL) {
+    if (groupname != NULL) {
         groupinfo = getgrnam(groupname);
         if (groupinfo) {
             if (setgid(groupinfo->gr_gid)) {
@@ -106,8 +108,9 @@ drop(char *username, char* groupname)
     return 0;
 }
 
-void run() {
-   initialize();
-   drop();
-   daemonize();
-}
+
+/* To use:
+ * initialize();
+ * drop();
+ * daemonize();
+ */

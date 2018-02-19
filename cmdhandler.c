@@ -9,6 +9,25 @@
 #include <ldns/ldns.h>
 #include "proto.h"
 
+static struct names_struct* zone;
+static int serial;
+
+struct names_struct* getzone(char* apex)
+{
+#ifdef NOTDEFINED
+    zone_type *zone = zonelist_lookup_zone_by_name(httpd* engine->zonelist, rpc->zone,
+        LDNS_RR_CLASS_IN);
+    if (!zone) {
+        rpc->status = RPC_RESOURCE_NOT_FOUND;
+        return 0;
+    }
+#else
+    (void)apex;
+    return zone;
+#endif
+}
+
+
 static void
 handler(struct evhttp_request *req, void *arg)
 {
@@ -20,16 +39,112 @@ handler(struct evhttp_request *req, void *arg)
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
+static void
+handler_zone(struct evhttp_request *req, void *arg)
+{
+    struct evbuffer *buf;
+    struct evkeyvalq params;
+    const char* apex;
+    const char* persist;
+    const char* input;
+    int status;
+    (void)arg;
+
+    if((buf = evbuffer_new()) == NULL)
+        return;
+
+    evhttp_parse_query(evhttp_request_get_uri(req), &params);
+    apex = evhttp_find_header(&params, "apex");
+    persist = evhttp_find_header(&params, "persist");
+    input = evhttp_find_header(&params, "input");
+    status = names_docreate(&zone, apex, persist, input);
+    serial = 1;
+
+    if(status) {
+        evhttp_send_reply(req, HTTP_INTERNAL, "Failed", buf);
+    } else {
+        evhttp_send_reply(req, HTTP_OK, "OK", buf);
+    }
+}
 
 static void
 handler_sign(struct evhttp_request *req, void *arg)
 {
     struct evbuffer *buf;
+    struct evkeyvalq params;
+    int status;
+    const char* newserial;
     (void)arg;
+
     if((buf = evbuffer_new()) == NULL)
         return;
 
-    evbuffer_add_printf(buf, "Requested: %s\n", evhttp_request_uri(req));
+    evhttp_parse_query(evhttp_request_get_uri(req), &params);
+    newserial = evhttp_find_header(&params, "newserial");
+    if(newserial) {
+        serial = atoi(newserial);
+    }
+
+    names_docycle(zone, &serial, NULL);
+
+    evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+static void
+handler_output(struct evhttp_request *req, void *arg)
+{
+    struct evbuffer *buf;
+    struct evkeyvalq params;
+    const char* output;
+    int status;
+
+    if((buf = evbuffer_new()) == NULL)
+        return;
+
+    evhttp_parse_query(evhttp_request_get_uri(req), &params);
+    output = evhttp_find_header(&params, "output");
+    names_docycle(zone, NULL, output);
+
+    evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+static void
+handler_cycle(struct evhttp_request *req, void *arg)
+{
+    struct evbuffer *buf;
+    struct evkeyvalq params;
+    const char* output;
+    int newserial;
+    (void)arg;
+
+    if((buf = evbuffer_new()) == NULL)
+        return;
+
+    evhttp_parse_query(evhttp_request_get_uri(req), &params);
+    output = evhttp_find_header(&params, "output");
+    newserial = evhttp_find_header(&params, "newserial");
+    if(newserial) {
+        serial = atoi(newserial);
+    }
+    names_docycle(zone, &serial, output);
+
+    evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+static void
+handler_persist(struct evhttp_request *req, void *arg)
+{
+    struct evbuffer *buf;
+    struct evkeyvalq params;
+    const char* output;
+    int status, newserial;
+    (void)arg;
+
+    if((buf = evbuffer_new()) == NULL)
+        return;
+
+    names_dopersist(zone);
+
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
@@ -59,7 +174,11 @@ cmdhandler_run(void)
 {
     httpd = evhttp_start("0.0.0.0", 8080);
     evhttp_set_cb(httpd, "/exit", handler_exit, NULL);
+    evhttp_set_cb(httpd, "/zone", handler_zone, NULL);
     evhttp_set_cb(httpd, "/sign", handler_sign, NULL);
+    evhttp_set_cb(httpd, "/cycle", handler_cycle, NULL);
+    evhttp_set_cb(httpd, "/output", handler_output, NULL);
+    evhttp_set_cb(httpd, "/persist", handler_persist, NULL);
     evhttp_set_gencb(httpd, handler, NULL);
     event_dispatch();
 }

@@ -32,85 +32,6 @@ struct dictionary_struct {
     char* tmpExpiry;
 };
 
-struct names_iterator_struct {
-    int (*iterate)(names_iterator*iter, void**);
-    int (*advance)(names_iterator*iter, void**);
-    int (*end)(names_iterator*iter);
-    int count;
-    int index;
-    void** array;
-};
-
-static int
-iterateimpl(names_iterator*i, void** item)
-{
-    struct names_iterator_struct** iter = i;
-    if (item)
-        *item = NULL;
-    if (*iter) {
-        if ((*iter)->index < (*iter)->count) {
-            if (item)
-                *item = (*iter)->array[(*iter)->index];
-            return 1;
-        } else {
-            free((*iter)->array);
-            free(*iter);
-            *iter = NULL;
-        }
-    }
-    return 0;
-}
-
-static int
-advanceimpl(names_iterator*i, void** item)
-{
-    struct names_iterator_struct** iter = i;
-    if(*iter) {
-        if((*iter)->index+1 < (*iter)->count) {
-            (*iter)->index += 1;
-            if(item)
-                *item = (*iter)->array[(*iter)->index];
-            return 1;
-        }
-        free((*iter)->array);
-        free(*iter);
-        *iter = NULL;
-    }
-    return 0;
-}
-
-static int
-endimpl(names_iterator*iter)
-{
-    if(*iter) {
-        free((*iter)->array);
-        free(*iter);
-    }
-    *iter = NULL;
-    return 0;
-}
-
-static names_iterator
-iterator(int count, void* base, size_t memsize, size_t offset)
-{
-    struct names_iterator_struct* iter;
-    void** array;
-    int i;
-    array = malloc(sizeof(void*) * count);
-    for(i=0; i<count; i++) {
-        array[i] = *(char**)&(((char*)base)[memsize*i+offset]);
-        assert(array[i]);
-    }
-    iter = malloc(sizeof(struct names_iterator_struct));
-    iter->iterate = iterateimpl;
-    iter->advance = advanceimpl;
-    iter->end = endimpl;
-    iter->count = count;
-    iter->index = 0;
-    iter->array = array;
-    return iter;
-}
-
 int
 names_recordcompare_namerevision(dictionary a, dictionary b)
 {
@@ -345,9 +266,7 @@ void
 names_recorddelall(dictionary d, char* name)
 {
     int i, j;
-    fprintf(stderr,"BERRY#names_recorddelall %s %s\n",d->name,(name?name:"(null)"));
     for(i=0; i<d->nitemsets; i++) {
-        fprintf(stderr,"BERRY#names_recorddelall %d\n",i);
         if(name==NULL || !strcmp(name, d->itemsets[i].itemname)) {
             for(j=0; j<d->itemsets[i].nitems; j++) {
                 free(d->itemsets[i].items[j].data);
@@ -376,17 +295,16 @@ names_recorddelall(dictionary d, char* name)
             d->itemsets = NULL;
         }        
     }
-    fprintf(stderr,"BERRY#names_recorddelall\n");
 }
 
 names_iterator
 names_recordalltypes(dictionary d)
 {
-    return iterator(d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, itemname));
+    return names_iterator_array(d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, itemname));
 }
 
 names_iterator
-names_recordallvalues(dictionary d, char*name)
+names_recordallvalues(dictionary d, char* name)
 {
     int i;
     for(i=0; i<d->nitemsets; i++) {
@@ -394,7 +312,7 @@ names_recordallvalues(dictionary d, char*name)
             break;
     }
     if(i<d->nitemsets) {
-        return iterator(d->itemsets[i].nitems, d->itemsets[i].items, sizeof(struct item), 0);
+        return names_iterator_array2(d->itemsets[i].nitems, d->itemsets[i].items, sizeof(struct item));
     } else {
         return NULL;
     }
@@ -484,6 +402,22 @@ names_recordsetexpiry(dictionary record, int value)
     assert(record->expiry == NULL);
     record->expiry = malloc(sizeof(int));
     *(record->expiry) = value;
+}
+
+void
+names_recordsetsignature(dictionary record, char*name, char* signature)
+{
+    int i;
+    if(name == NULL) {
+        record->spansignature = strdup(signature);
+    } else {
+        for(i=0; i<record->nitemsets; i++) {
+            if(!strcmp(record->itemsets[i].itemname, name)) {
+                record->itemsets[0].signature = strdup(signature);
+                break;
+            }
+        }
+    }
 }
 
 int
@@ -642,7 +576,7 @@ getset(dictionary d, const char* name, const char** get, const char** set)
     int rc = 1;
     if (get)
         *get = NULL;
-    if (!strcmp(name,"name")) {
+    if (!strcmp(name,"name") || !strcmp(name,"nameupcoming")) {
         rc = (d->name != NULL);
         if (get) {
             *get = d->name;

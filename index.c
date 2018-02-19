@@ -12,6 +12,7 @@ typedef int (*comparefunction)(const void *, const void *);
 typedef int (*acceptfunction)(dictionary newitem, dictionary currentitem, int* cmp);
 
 struct names_index_struct {
+    const char* keyname;
     ldns_rbtree_t* tree;
     acceptfunction acceptfunc;
 };
@@ -32,6 +33,7 @@ names_indexcreate(names_index_type* index, const char* keyname)
     names_recordindexfunction(keyname, &acceptfunc, &comparfunc);
     assert(acceptfunc);
     assert(comparfunc);
+    (*index)->keyname = strdup(keyname);
     (*index)->acceptfunc = acceptfunc;
     (*index)->tree = ldns_rbtree_create(comparfunc);
     return 0;
@@ -60,6 +62,7 @@ names_indexdestroy(names_index_type index, void (*userfunc)(void* arg, void* key
     cargo.arg = userarg;
     ldns_traverse_postorder(index->tree, disposenode, (userfunc?&cargo:NULL));
     ldns_rbtree_free(index->tree);
+    free(index->keyname);
     free(index);
 }
 
@@ -126,7 +129,7 @@ names_indexlookupkey(names_index_type index, const char* keyvalue)
     dictionary find;
     dictionary found;
     find = names_recordcreate(NULL);
-    getset(find,"namerevision",NULL,&keyvalue); // FIXME
+    getset(find,index->keyname,NULL,&keyvalue); // FIXME
     found = names_indexlookup(index, find);
     dispose(find);
     return found;
@@ -144,7 +147,7 @@ int
 names_indexremove(names_index_type index, dictionary d)
 {
     const char *value;
-    if(getset(d, "namerevision", &value, NULL)) {
+    if(getset(d, index->keyname, &value, NULL)) {
         return names_indexremovekey(index, value);
     } else
         return 0;
@@ -156,7 +159,7 @@ names_indexremovekey(names_index_type index, const char* keyvalue)
     dictionary find;
     ldns_rbnode_t* node;
     find = names_recordcreate(NULL);
-    getset(find, "namerevision", NULL, &keyvalue);
+    getset(find, index->keyname, NULL, &keyvalue);
     node = ldns_rbtree_delete(index->tree, find);
     dispose(find);
     if(node) {
@@ -237,20 +240,19 @@ names_indexrange(names_index_type index, char* selection, ...)
     ldns_rbnode_t* node;
     names_iterator iter;
     va_start(ap, selection);
-    iter = generic_iterator(sizeof(dictionary));
+    iter = names_iterator_create(sizeof(dictionary));
     if (index->tree) {
         find = va_arg(ap, char*);
         findlen = strlen(find);
         record = names_recordcreate(NULL);
-        getset(record, "namerevision", NULL, &find);
+        getset(record, "name", NULL, &find);
         (void)ldns_rbtree_find_less_equal(index->tree, record, &node);
         names_recorddestroy(record);
         while(node && node != LDNS_RBTREE_NULL) {
             record = (dictionary)node->key;
             getset(record,"name",&found,NULL);
             if(!strncmp(find,found,findlen) && (found[findlen-1]=='\0' || found[findlen-1]=='.')) {
-names_dumprecord(stderr, record);
-                generic_add(iter, &record);
+                names_iterator_add(iter, &record);
             } else {
                 break;
             }

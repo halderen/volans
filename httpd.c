@@ -25,7 +25,7 @@
 #include "proto.h"
 #include "httpd.h"
 
-#define HTTPD_POOL_SIZE 10
+#define HTTPD_POOL_SIZE 1
 
 struct connection_info {
     size_t buflen;
@@ -61,9 +61,9 @@ deletedelegation(names_view_type view, struct rpc *rpc)
 {
     /* delete everything below delegation point, inclusive */
     names_iterator iter;
-    dictionary record;
+    dictionary* record;
     for (iter = names_viewiterate(view, "allbelow", rpc->delegation_point); names_iterate(&iter, &record); names_advance(&iter, NULL)) {
-        names_recorddelall(record, NULL);
+        names_recorddelall(*record, NULL);
     }
     /* in case of error  rpc->status = RPC_ERR; */
     return 0;
@@ -83,7 +83,7 @@ insertrecords(names_view_type view, struct rpc *rpc)
         }
         char* owner = ldns_rdf2str(ldns_rr_owner(rr));
         /* this shouldn't be in the database anymore so we get a new object */
-        dictionary record = names_take(view, 0, owner);
+        dictionary record = names_place(view, owner);
         free(owner);
         if (!record) {
             names_viewreset(view);
@@ -107,12 +107,13 @@ insertrecords(names_view_type view, struct rpc *rpc)
     return 0;
 }
 
+struct names_struct* getzone(char* apex);
 
 static int
 dispatch(struct httpd* httpd, struct rpc *rpc)
 {
     names_view_type view;
-    view = getzone(rpc->zone);
+    view = getzone(rpc->zone)->inputview;
     switch (rpc->opc) {
         case RPC_CHANGE_DELEGATION:
             deletedelegation(view, rpc);
@@ -132,7 +133,6 @@ dispatch(struct httpd* httpd, struct rpc *rpc)
 static int
 print_headers(void *cls, enum MHD_ValueKind kind, const char *key, const char *value)
 {
-    printf("\tHEADER: %s: %s\n", key, value);
     return MHD_YES;
 }
 
@@ -188,7 +188,6 @@ handle_connection(void *cls, struct MHD_Connection *connection,
     size_t *upload_data_size, void **con_cls)
 {
     struct httpd* httpd = (struct httpd*) cls;
-    printf("%s - %s - %s - %ld\n", url, method, version, *upload_data_size);
     if(!*con_cls) {
         struct connection_info *con_info = malloc(sizeof(struct connection_info));
         if (!con_info) return MHD_NO;
@@ -251,10 +250,12 @@ static void
 handle_connection_start(void *cls, struct MHD_Connection *connection,
     void **socket_context, enum MHD_ConnectionNotificationCode toe)
 {
+#ifdef NOTDEFINED
     if (toe == MHD_CONNECTION_NOTIFY_STARTED)
         printf("started connection\n");
     else
         printf("stopped connection\n");
+#endif
 }
 
 struct httpd *

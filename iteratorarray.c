@@ -8,50 +8,24 @@ struct names_iterator_struct {
     int (*iterate)(names_iterator*iter, void**);
     int (*advance)(names_iterator*iter, void**);
     int (*end)(names_iterator*iter);
-
-    int itemcnt, itemmax, itemidx, itemsiz;
-    char* items;
+    int count;
+    int index;
+    void** array;
 };
 
-int
-names_iterate(names_iterator*iter, void* item)
-{
-    if(*iter)
-        return (*iter)->iterate(iter, (void**)item);
-    else
-        return 0;
-}
-
-int
-names_advance(names_iterator*iter, void* item)
-{
-    if(*iter)
-        return (*iter)->advance(iter, (void**)item);
-    else
-        return 0;
-}
-
-int
-names_end(names_iterator*iter)
-{
-    if(*iter)
-        return (*iter)->end(iter);
-    else
-        return 0;
-}
-
-
 static int
-iterateimpl(names_iterator* iter, void** item)
+iterateimpl(names_iterator*i, void** item)
 {
+    struct names_iterator_struct** iter = i;
     if (item)
         *item = NULL;
     if (*iter) {
-        if ((*iter)->itemidx < (*iter)->itemcnt) {
+        if ((*iter)->index < (*iter)->count) {
             if (item)
-                *item = &((*iter)->items[(*iter)->itemidx * (*iter)->itemsiz]);
+                *item = (*iter)->array[(*iter)->index];
             return 1;
         } else {
+            free((*iter)->array);
             free(*iter);
             *iter = NULL;
         }
@@ -63,15 +37,14 @@ static int
 advanceimpl(names_iterator*i, void** item)
 {
     struct names_iterator_struct** iter = i;
-    if (item)
-        *item = NULL;
-    if (*iter) {
-        (*iter)->itemidx += 1;
-        if ((*iter)->itemidx < (*iter)->itemcnt) {
-            if (item)
-                *item = &((*iter)->items[(*iter)->itemidx * (*iter)->itemsiz]);
+    if(*iter) {
+        if((*iter)->index+1 < (*iter)->count) {
+            (*iter)->index += 1;
+            if(item)
+                *item = (*iter)->array[(*iter)->index];
             return 1;
         }
+        free((*iter)->array);
         free(*iter);
         *iter = NULL;
     }
@@ -81,34 +54,52 @@ advanceimpl(names_iterator*i, void** item)
 static int
 endimpl(names_iterator*iter)
 {
-    if(*iter) free(*iter);
-        *iter = NULL;
+    if(*iter) {
+        free((*iter)->array);
+        free(*iter);
+    }
+    *iter = NULL;
     return 0;
 }
 
 names_iterator
-generic_iterator(size_t size)
+names_iterator_array(int count, void* base, size_t memsize, size_t offset)
 {
-    names_iterator iter;
+    struct names_iterator_struct* iter;
+    void** array;
+    int i;
+    array = malloc(sizeof(void*) * count);
+    for(i=0; i<count; i++) {
+        array[i] = *(char**)&(((char*)base)[memsize*i+offset]);
+        assert(array[i]);
+    }
     iter = malloc(sizeof(struct names_iterator_struct));
     iter->iterate = iterateimpl;
     iter->advance = advanceimpl;
     iter->end = endimpl;
-    iter->itemcnt = 0;
-    iter->itemmax = 2;
-    iter->itemidx = 0;
-    iter->itemsiz = size;
-    iter->items = malloc(iter->itemmax * iter->itemsiz);;
+    iter->count = count;
+    iter->index = 0;
+    iter->array = array;
     return iter;
 }
 
-void
-generic_add(names_iterator i, void* ptr)
+names_iterator
+names_iterator_array2(int count, void* base, size_t memsize)
 {
-    if(i->itemcnt == i->itemmax) {
-        i->itemmax *= 2;
-        i->items = realloc(i->items, i->itemmax * i->itemsiz);
+    struct names_iterator_struct* iter;
+    void** array;
+    int i;
+    array = malloc(sizeof(void*) * count);
+    for(i=0; i<count; i++) {
+        array[i] = &(((char*)base)[memsize*i]);
+        assert(array[i]);
     }
-    memcpy(&(i->items[i->itemcnt * i->itemsiz]), ptr, i->itemsiz);
-    i->itemcnt += 1;
+    iter = malloc(sizeof(struct names_iterator_struct));
+    iter->iterate = iterateimpl;
+    iter->advance = advanceimpl;
+    iter->end = endimpl;
+    iter->count = count;
+    iter->index = 0;
+    iter->array = array;
+    return iter;
 }

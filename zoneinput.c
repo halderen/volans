@@ -31,13 +31,11 @@ struct removal_struct* removals = NULL;
 void
 rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
 {
+    unsigned int i;
     int len;
-    unsigned int i, j;
-    int recorddatalen ;
+    int recorddatalen;
     char* recorddata;
     char *s;
-    ldns_rdf* rdata;
-    uint8_t* data;
     const char* recordclass;
     uint32_t recordttl;
 
@@ -48,7 +46,6 @@ rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
     snprintf(*recordinfoptr,len+1,"%u %s",recordttl,recordclass);
 
     recorddatalen = 0;
-#ifndef NOTDEFINED
     for (i = 0; i < ldns_rr_rd_count(rr); i++) {
         s = ldns_rdf2str(ldns_rr_rdf(rr, i));
         recorddatalen += strlen(s) + 1;
@@ -63,7 +60,28 @@ rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
         strcat(recorddata, s); //FIXME concatename items that need " or (
         free(s);
     }
-#else
+    *recorddataptr = recorddata;
+}
+
+void
+rr2data_new(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
+{
+    int len;
+    unsigned int i, j;
+    int recorddatalen ;
+    char* recorddata;
+    ldns_rdf* rdata;
+    uint8_t* data;
+    const char* recordclass;
+    uint32_t recordttl;
+
+    recordclass = ldns_rr_class2str(ldns_rr_get_class(rr));
+    recordttl = ldns_rr_ttl(rr);
+    len = snprintf(NULL,0,"%u %s",recordttl,recordclass);
+    *recordinfoptr = malloc(len+1);
+    snprintf(*recordinfoptr,len+1,"%u %s",recordttl,recordclass);
+
+    recorddatalen = 0;
     for (i = 0; i < ldns_rr_rd_count(rr); i++) {
         recorddatalen += ldns_rdf_size(ldns_rr_rdf(rr, i));
     }
@@ -79,10 +97,8 @@ rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
             recorddata += 2;
         }
     }
-#endif
     *recorddataptr = recorddata;
 }
-
 
 int
 readzone(names_view_type view, enum operation_enum operation, const char* filename, char** apexptr, int* defaultttlptr)
@@ -164,6 +180,7 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
                     err = LDNS_STATUS_OK;
                     break;
                 default:
+                    fprintf(stderr,"Error at %s:%d \n",__FILE__,__LINE__);
                     fprintf(stderr,"%d %s\n", err, ldns_get_errorstr_by_id(err));
             }
         } else {

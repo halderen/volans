@@ -64,8 +64,10 @@ int names_iterate(names_iterator*iter, void* item);
 int names_advance(names_iterator*iter, void* item);
 int names_end(names_iterator*iter);
 
-names_iterator generic_iterator(size_t size);
-void generic_add(names_iterator i, void* ptr);
+names_iterator names_iterator_create(size_t size);
+void names_iterator_add(names_iterator i, void* ptr);
+names_iterator names_iterator_array(int count, void* base, size_t memsize, size_t offset);
+names_iterator names_iterator_array2(int count, void* base, size_t memsize);
 
 struct marshall_struct;
 typedef struct marshall_struct* marshall_handle;
@@ -129,6 +131,7 @@ void names_recordsetvalidfrom(dictionary, int value);
 int names_recordhasexpiry(dictionary);
 int names_recordgetexpiry(dictionary);
 void names_recordsetexpiry(dictionary, int value);
+void names_recordsetsignature(dictionary record, char*name, char* signature);
 int names_recordmarshall(dictionary*, marshall_handle);
 void names_recordindexfunction(const char* keyname, int (**acceptfunction)(dictionary newitem, dictionary currentitem, int* cmp), int (**comparefunction)(const void *, const void *));
 
@@ -192,7 +195,7 @@ names_iterator names_viewiterate(names_view_type view, char* name, ...);
 int names_viewcommit(names_view_type view);
 void names_viewreset(names_view_type view);
 int names_viewpersist(names_view_type view, int basefd, char* filename);
-int names_viewrestore(names_view_type view, const char* apex, int basefd, char* filename);
+int names_viewrestore(names_view_type view, const char* apex, int basefd, const char* filename);
 
 void names_dumprecord(FILE*, dictionary record);
 void names_dumpviewinfo(names_view_type view);
@@ -205,6 +208,7 @@ void destroysignconf(struct signconf* signconf);
 void setupsignconf(struct signconf* signconf);
 void teardownsignconf(struct signconf* signconf);
 void signrecord(struct signconf* signconf, dictionary record);
+void signrecord2(struct signconf* signconf, dictionary record, char* apex);
 void sign(names_view_type view);
 void prepare(names_view_type view, int newserial);
 void writezone(names_view_type view, const char* filename, const char* apex, int* defaultttl);
@@ -221,11 +225,12 @@ struct names_struct {
     int basefd;
     char* apex;
     char* source;
+    char* persist;
 };
 
-struct names_struct* names_docreate(char* source);
+int names_docreate(struct names_struct** zoneptr, const char* apex, const char* persist, const char* input);
 void names_dodestroy(struct names_struct* names);
-void names_dofull(struct names_struct* names, int serial);
-void names_docycle(struct names_struct* names, int serial);
+void names_docycle(struct names_struct* names, int* serial, const char* filename);
+void names_dopersist(struct names_struct* names);
 
 #endif
