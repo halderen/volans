@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([volans], [1.0-dev], [http://github.org/halderen/volans/])
+AC_INIT([volans], [0.1-dev], [http://github.org/halderen/volans/])
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
