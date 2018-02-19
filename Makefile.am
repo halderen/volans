@@ -21,14 +21,18 @@ uninstall-hook:
 	rm -f $(DESTDIR)$(bindir)/volansd$(EXEEXT)
 
 BUILT_SOURCES = schema_mysql.h
+EXTRA_DIST = schema_mysql.sql schema_sqlite.sql
 
 volans_SOURCES = volans.c model.c utilities.c utilities.h backend.h \
                  schema_sqlite.h backendsqlite.c daemonize.c \
-                 schema_mysql.h backendmysql.c cmdhandler.c \
-                 marshalling.c httpd.c rpc.c httpd.h \
+                 schema_mysql.h backendmysql.c cmdhandler.c cmdhandler.h \
+                 marshalling.c httpd.c rpc.c httpd.h proto.h \
                  iterator.c iteratorgeneric.c iteratorarray.c \
                  dictionary.c views.c table.c commitlog.c index.c \
-                 zoneinput.c zoneoutput.c zonesign.c zonesignrecord.c names.c
+                 zoneinput.c zoneoutput.c zonesign.c zonesignrecord.c names.c \
+                 uthash.h utarray.h utmm.h utstring.h utlist.h \
+                 utringbuffer.h utvector.h pkcs11.h
+
 volans_LDADD = schema_mysql.o schema_sqlite.o $(LIBCURL)
 
 test_SOURCES = tests/opendnssectest.c model.c schema_mysql.h
