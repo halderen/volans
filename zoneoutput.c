@@ -33,6 +33,9 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
 
     origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
     fp = fopen(filename,"w");
+    if(!fp) {
+        fprintf(stderr,"unable to open file \"%s\"\n",filename);
+    }
 
     s = ldns_rdf2str(origin);
     fprintf(fp, "$ORIGIN %s\n", s);

@@ -59,8 +59,6 @@
 struct rpc *
 rpc_decode_json(const char *url, const char *buf, size_t buflen)
 {
-    /*printf("incoming data: \"%s\"\n", buf);//not null terminated!*/
-
     json_error_t error;
     json_t *root = json_loadb(buf, buflen, 0, &error);
     if (!root) {
@@ -80,11 +78,6 @@ rpc_decode_json(const char *url, const char *buf, size_t buflen)
         return NULL;
     }
     json_t *obj_correlation = json_object_get(root, "transaction");
-    if (!obj_correlation || !json_is_string(obj_correlation)) {
-        printf("correlation not found.\n");
-        json_decref(root);
-        return NULL;
-    }
 
     json_t *obj_entities = json_object_get(root, "entities");
     if (!obj_entities || !json_is_array(obj_entities)) {
@@ -192,7 +185,7 @@ rpc_decode_json(const char *url, const char *buf, size_t buflen)
     rpc->zone = strdup(zone);
     rpc->version = strdup(version);
     rpc->detail_version = strdup(json_string_value(obj_version));
-    rpc->correlation = strdup(json_string_value(obj_correlation));
+    rpc->correlation = (obj_correlation ? strdup(json_string_value(obj_correlation)) : NULL);
     rpc->delegation_point = strdup(delegation_point);
     rpc->rr_count = rr_count;
     rpc->rr = rr;

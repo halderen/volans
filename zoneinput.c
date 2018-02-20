@@ -126,6 +126,10 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
     ldns_rr* rr;
 
     fp = fopen(filename,"r");
+    if(!fp) {
+        fprintf(stderr,"unable to open file \"%s\"\n",filename);
+        return -1;
+    }
     origin = NULL;
     prevowner = NULL;
 

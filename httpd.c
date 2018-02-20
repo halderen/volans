@@ -62,8 +62,11 @@ deletedelegation(names_view_type view, struct rpc *rpc)
     /* delete everything below delegation point, inclusive */
     names_iterator iter;
     dictionary* record;
+    dictionary r;
     for (iter = names_viewiterate(view, "allbelow", rpc->delegation_point); names_iterate(&iter, &record); names_advance(&iter, NULL)) {
-        names_recorddelall(*record, NULL);
+        r = *record;
+        names_own(view, &r);
+        names_recorddelall(r, NULL);
     }
     /* in case of error  rpc->status = RPC_ERR; */
     return 0;
@@ -101,7 +104,6 @@ insertrecords(names_view_type view, struct rpc *rpc)
         free((void*)recorddata);
         free((void*)recordinfo);
     }
-    names_viewcommit(view);
 
     rpc->status = RPC_OK;
     return 0;
@@ -114,14 +116,17 @@ dispatch(struct httpd* httpd, struct rpc *rpc)
 {
     names_view_type view;
     view = getzone(rpc->zone)->inputview;
+    names_viewreset(view);
     switch (rpc->opc) {
         case RPC_CHANGE_DELEGATION:
             deletedelegation(view, rpc);
             insertrecords(view, rpc);
+            names_viewcommit(view);
             break;
         case RPC_CHANGE_NAME:
             deleterecordsets(view, rpc);
             insertrecords(view, rpc);
+            names_viewcommit(view);
             break;
         default:
             rpc->status = RPC_ERR;
