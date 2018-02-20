@@ -83,7 +83,7 @@ struct backend
 mysqlRegister(void)
 {
     struct backend backend;
-    memset(backend, 0, sizeof(struct backend));
+    memset(&backend, 0, sizeof(struct backend));
     return backend;
 }
 

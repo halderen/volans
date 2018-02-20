@@ -155,9 +155,8 @@ handler_exit(struct evhttp_request *req, void *arg)
     if((buf = evbuffer_new()) == NULL)
         return;
 
-    evbuffer_add_printf(buf, "Requested: %s\n", evhttp_request_uri(req));
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
-    event_loopbreak();
+    event_loopexit(NULL);
 }
 
 static struct evhttp* httpd;
