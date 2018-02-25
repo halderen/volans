@@ -50,6 +50,8 @@
       <itemPath>iterator.c</itemPath>
       <itemPath>iteratorarray.c</itemPath>
       <itemPath>iteratorgeneric.c</itemPath>
+      <itemPath>/home/berry/volans/logging.c</itemPath>
+      <itemPath>/home/berry/volans/logging.h</itemPath>
       <itemPath>marshalling.c</itemPath>
       <itemPath>model.c</itemPath>
       <itemPath>/home/berry/volans/names.c</itemPath>
@@ -103,6 +105,10 @@
       </toolsSet>
       <compileType>
       </compileType>
+      <item path="/home/berry/volans/logging.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/berry/volans/logging.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="/home/berry/volans/names.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="/home/berry/volans/rpc.c" ex="false" tool="0" flavor2="0">
@@ -218,6 +224,10 @@
           <preBuildCommand></preBuildCommand>
         </preBuild>
       </makefileType>
+      <item path="/home/berry/volans/logging.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/berry/volans/logging.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="/home/berry/volans/names.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="/home/berry/volans/rpc.c" ex="false" tool="0" flavor2="0">

@@ -50,24 +50,6 @@ daemonize(char *directory)
     return status;
 }
 
-void
-initialize()
-{
-    openlog(argv0, LOG_NDELAY, LOG_DAEMON);
-}
-
-void
-finalize() {
-    closelog();
-}
-
-__attribute__((__format__(__printf__, 2, 3)))
-void
-log(void* class, char *message, ...)
-{
-    syslog(LOG_ERR, message);
-}
-
 int
 drop(char *username, char* groupname)
 {
@@ -107,10 +89,3 @@ drop(char *username, char* groupname)
     }
     return 0;
 }
-
-
-/* To use:
- * initialize();
- * drop();
- * daemonize();
- */

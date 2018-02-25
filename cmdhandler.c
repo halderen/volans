@@ -71,7 +71,6 @@ handler_sign(struct evhttp_request *req, void *arg)
 {
     struct evbuffer *buf;
     struct evkeyvalq params;
-    int status;
     const char* newserial;
     (void)arg;
 
@@ -95,7 +94,7 @@ handler_output(struct evhttp_request *req, void *arg)
     struct evbuffer *buf;
     struct evkeyvalq params;
     const char* output;
-    int status;
+    (void)arg;
 
     if((buf = evbuffer_new()) == NULL)
         return;
@@ -113,7 +112,7 @@ handler_cycle(struct evhttp_request *req, void *arg)
     struct evbuffer *buf;
     struct evkeyvalq params;
     const char* output;
-    int newserial;
+    const char* newserial;
     (void)arg;
 
     if((buf = evbuffer_new()) == NULL)
@@ -134,9 +133,6 @@ static void
 handler_persist(struct evhttp_request *req, void *arg)
 {
     struct evbuffer *buf;
-    struct evkeyvalq params;
-    const char* output;
-    int status, newserial;
     (void)arg;
 
     if((buf = evbuffer_new()) == NULL)

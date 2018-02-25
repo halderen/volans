@@ -57,7 +57,7 @@ rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
         s = ldns_rdf2str(ldns_rr_rdf(rr, i));
         if (i > 0)
             strcat(recorddata, " ");
-        strcat(recorddata, s); //FIXME concatename items that need " or (
+        strcat(recorddata, s);
         free(s);
     }
     *recorddataptr = recorddata;

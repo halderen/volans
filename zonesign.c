@@ -19,9 +19,11 @@ void
 prepare(names_view_type view, int newserial)
 {
     dictionary record;
+    struct dual changex;
     struct dual* change;
+        change = &changex;
     names_iterator iter;
-    for (iter=neighbors(view); names_iterate(&iter,&change); names_advance(&iter,NULL)) {
+    for (iter=neighbors(view); names_iterate(&iter,&changex); names_advance(&iter,NULL)) {
         assert(change->src != change->dst);
         record = change->dst;
         if(names_recordhasexpiry(record)) {
@@ -30,7 +32,7 @@ prepare(names_view_type view, int newserial)
             names_recordsetvalidfrom(record, newserial);
         }
     }
-    for (iter=noexpiry(view); names_iterate(&iter,&change); names_advance(&iter,NULL)) {
+    for (iter=noexpiry(view); names_iterate(&iter,&changex); names_advance(&iter,NULL)) {
         assert(change->src != change->dst);
         if(change->src && !names_recordhasvalidupto(change->src)) {
             names_amend(view, change->src);
@@ -50,7 +52,7 @@ prepare(names_view_type view, int newserial)
 void
 sign(names_view_type view)
 {
-    dictionary* domain;
+    dictionary domain;
     names_iterator iter;
     struct signconf* signconf;
     
@@ -58,9 +60,9 @@ sign(names_view_type view)
     locatekeysignconf(signconf, 0, "Kexample.+008+24693.private");
     setupsignconf(signconf);
     for(iter=expiring(view); names_iterate(&iter,&domain); names_advance(&iter,NULL)) {
-        names_amend(view, *domain);
-        signrecord(signconf, *domain);
-        names_recordsetexpiry(*domain, 1);
+        names_amend(view, domain);
+        signrecord(signconf, domain);
+        names_recordsetexpiry(domain, 1);
     }
     teardownsignconf(signconf);
     destroysignconf(signconf);

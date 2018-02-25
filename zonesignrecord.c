@@ -122,7 +122,7 @@ signrecord(struct signconf* signconf, dictionary record)
 {
     names_iterator typeiter;
     names_iterator dataiter;
-    struct item* item;
+    struct item item;
     const char* recordname;
     const char* recordinfo;
     char* recordtype;
@@ -134,21 +134,21 @@ signrecord(struct signconf* signconf, dictionary record)
     char** signatures;
     int nsignatures, signaturesidx;
 
-    char s[10240];
+    char s[10240]; // FIXME
     ldns_rdf* origin;
     uint32_t defaultttl = 60;
     ldns_status err;
     origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, "example.");
     
     getset(record, "name", &recordname, NULL);
-    
+
     for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
         rrset = ldns_rr_list_new();
         rrtype = ldns_get_rr_type_by_name(recordtype);
         for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
-            recorddata = item->data;
-            recordinfo = item->info;
-            sprintf(s, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
+            recorddata = item.data;
+            recordinfo = item.info;
+            sprintf(s, "%s\t%s\t%s\t%s\n", recordname, (recordinfo?recordinfo:""), recordtype, recorddata);
             err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
             assert(err == LDNS_STATUS_OK);
             ldns_rr_list_push_rr(rrset, rr);
@@ -448,7 +448,7 @@ signrecord2(struct signconf* signconf, dictionary record, char* apex)
 {
     names_iterator typeiter;
     names_iterator dataiter;
-    struct item* item;
+    struct item item;
     int i;
     const char* recordname;
     const char* recordinfo;
@@ -469,8 +469,8 @@ signrecord2(struct signconf* signconf, dictionary record, char* apex)
     for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
         rrset = ldns_rr_list_new();
         for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
-            recorddata = item->data;
-            recordinfo = item->info;
+            recorddata = item.data;
+            recordinfo = item.info;
             sprintf(s, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
             err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
             assert(err == LDNS_STATUS_OK);

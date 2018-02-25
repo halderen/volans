@@ -87,7 +87,7 @@ names_docycle(struct names_struct* names, int* serial, const char* filename)
 {
     if(serial) {
         names_viewreset(names->prepareview);
-        prepare(names->prepareview, serial);
+        prepare(names->prepareview, *serial);
         if (names_viewcommit(names->prepareview)) {
             abort();
         }

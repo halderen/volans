@@ -47,6 +47,8 @@ extern void diagnostic_print(char *fmt, ...)
  " \"%s\" failed on line %d: %s (%d)\n", #EX, __LINE__, strerror(err), err); \
   abort(); }} while(0)
 
+#define CHECKALLOC(PTR) if(!(PTR)) { fprintf(stderr,"Out of memory when executing %s at %s:%d\n", #PTR, __FILE__, __LINE__); }
+
 extern char* argv0;
 
 typedef void (*functioncast_t)(void);

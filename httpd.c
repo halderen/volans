@@ -22,6 +22,7 @@
 #include <microhttpd.h>
 
 #include "uthash.h"
+#include "utilities.h"
 #include "proto.h"
 #include "httpd.h"
 
@@ -61,12 +62,10 @@ deletedelegation(names_view_type view, struct rpc *rpc)
 {
     /* delete everything below delegation point, inclusive */
     names_iterator iter;
-    dictionary* record;
-    dictionary r;
+    dictionary record;
     for (iter = names_viewiterate(view, "allbelow", rpc->delegation_point); names_iterate(&iter, &record); names_advance(&iter, NULL)) {
-        r = *record;
-        names_own(view, &r);
-        names_recorddelall(r, NULL);
+        names_own(view, &record);
+        names_recorddelall(record, NULL);
     }
     /* in case of error  rpc->status = RPC_ERR; */
     return 0;
@@ -133,12 +132,6 @@ dispatch(struct httpd* httpd, struct rpc *rpc)
             return 0;
     }
     return 0;
-}
-
-static int
-print_headers(void *cls, enum MHD_ValueKind kind, const char *key, const char *value)
-{
-    return MHD_YES;
 }
 
 static int
@@ -249,18 +242,6 @@ handle_connection_done(void *cls, struct MHD_Connection *connection,
     }
     free(con_info);
     *con_cls = NULL;
-}
-
-static void
-handle_connection_start(void *cls, struct MHD_Connection *connection,
-    void **socket_context, enum MHD_ConnectionNotificationCode toe)
-{
-#ifdef NOTDEFINED
-    if (toe == MHD_CONNECTION_NOTIFY_STARTED)
-        printf("started connection\n");
-    else
-        printf("stopped connection\n");
-#endif
 }
 
 struct httpd *

@@ -88,7 +88,7 @@ names_own(names_view_type view, dictionary* record)
     changed(view, *record, MOD, &dict);
     if(dict && *dict == NULL) {
         names_indexremove(view->indices[0], *record);
-        *dict = named_recordcopy(*record);
+        *dict = names_recordcopy(*record);
         names_indexinsert(view->indices[0], *dict);
     }
     *record = *dict;
@@ -444,9 +444,9 @@ expiring(names_view_type view)
     dictionary record;
     names_iterator iter;
     names_iterator result;
-    result = names_iterator_create(sizeof(dictionary));
+    result = names_iterator_create(0);
     for (iter=names_indexiterator(view->indices[0]); names_iterate(&iter,&record); names_advance(&iter,NULL)) {
-        names_iterator_add(result, &record);
+        names_iterator_add(result, record);
     }
     return result;
 }

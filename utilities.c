@@ -12,8 +12,8 @@ functioncast(void*generic) {
     return *function;
 }
 
-#ifndef NOTDEFINED
-unsigned long long int rnd(void)
+unsigned long long int
+rnd(void)
 {
   unsigned long long int foo;
   int cf_error_status;
@@ -25,16 +25,6 @@ unsigned long long int rnd(void)
         mov %%rax, %0;":"=r"(foo),"=r"(cf_error_status)::"%rax","%rdx");
   return  (!cf_error_status ? 0 : foo);
 }
-#else
-unsigned long long int rnd(void)
-{
-    uint64_t rand = 0;
-    unsigned char ok;
-    asm volatile ("rdrand %0; setc %1"
-                : "=r" (rand), "=qm" (ok));
-    return (ok ? rand : 0);
-}
-#endif
 
 static int markcount = 0;
 static int marktime;

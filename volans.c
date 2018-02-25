@@ -25,6 +25,7 @@
 #include "utilities.h"
 #include "backend.h"
 #include "cmdhandler.h"
+#include "daemonize.h"
 #include "proto.h"
 #include "httpd.h"
 
@@ -107,7 +108,7 @@ main(int argc, char** argv)
  
     if(optionServer) {
         if(optionDaemonize)
-            daemonize();
+            daemonize(NULL);
         cmdhandler_initialize();
         listenerconfig.count = 0;
         listenerconfig.interfaces = NULL;
@@ -123,6 +124,8 @@ main(int argc, char** argv)
     } else {
         CURL *curl = curl_easy_init();
         CURLcode result;
+        if(argc==1)
+            exit(0);
         if(!strcmp(argv[1],"exit")) {
             curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/exit");
         } else if(!strcmp(argv[1],"zone")) {
@@ -196,6 +199,12 @@ main(int argc, char** argv)
                 default:
                     fprintf(stderr,"bad number of argument\n");
             }
+        } else if(!strcmp(argv[1],"test")) {
+            struct names_struct* zone = NULL;
+            int serial = 1;
+            names_docreate(&zone, "example.", "storage", "example");
+            names_docycle(zone, &serial, "output");
+            exit(0);
         } else {
             fprintf(stderr,"unknown argument\n");
         }

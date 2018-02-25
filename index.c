@@ -62,7 +62,7 @@ names_indexdestroy(names_index_type index, void (*userfunc)(void* arg, void* key
     cargo.arg = userarg;
     ldns_traverse_postorder(index->tree, disposenode, (userfunc?&cargo:NULL));
     ldns_rbtree_free(index->tree);
-    free(index->keyname);
+    free((void*)index->keyname);
     free(index);
 }
 
@@ -94,7 +94,7 @@ names_indexinsert(names_index_type index, dictionary d)
                 case 0:
                     return 0;
                 case 1:
-                    if(named_recordhasmarker(d)) {
+                    if(names_recordhasmarker(d)) {
                         ldns_rbtree_delete(index->tree, node->key);
                     } else {
                         node->key = d;
@@ -113,7 +113,7 @@ names_indexinsert(names_index_type index, dictionary d)
     } else {
         node = ldns_rbtree_search(index->tree, d);
         if(node != NULL) {
-            if(named_recordhasmarker(d) ||
+            if(names_recordhasmarker(d) ||
                index->acceptfunc(d, (dictionary)node->data, &cmp) == 0 ||
                (cmp == 0 && node->key == d)) {
                 ldns_rbtree_delete(index->tree, node->key);
@@ -240,7 +240,7 @@ names_indexrange(names_index_type index, char* selection, ...)
     ldns_rbnode_t* node;
     names_iterator iter;
     va_start(ap, selection);
-    iter = names_iterator_create(sizeof(dictionary));
+    iter = names_iterator_create(0);
     if (index->tree) {
         find = va_arg(ap, char*);
         findlen = strlen(find);
@@ -252,7 +252,7 @@ names_indexrange(names_index_type index, char* selection, ...)
             record = (dictionary)node->key;
             getset(record,"name",&found,NULL);
             if(!strncmp(find,found,findlen) && (found[findlen-1]=='\0' || found[findlen-1]=='.')) {
-                names_iterator_add(iter, &record);
+                names_iterator_add(iter, record);
             } else {
                 break;
             }

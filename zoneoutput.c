@@ -21,7 +21,7 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
     char* s;
     const char* recordname;
     char* recordtype;
-    struct item* item;
+    struct item item;
     char* recorddata;
     char* recordinfo;
     names_iterator domainiter;
@@ -47,8 +47,8 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
         getset(domainitem, "name", &recordname, NULL);
         for (rrsetiter = names_recordalltypes(domainitem); names_iterate(&rrsetiter, &recordtype); names_advance(&rrsetiter, NULL)) {
             for (rriter = names_recordallvalues(domainitem,recordtype); names_iterate(&rriter, &item); names_advance(&rriter, NULL)) {
-                recorddata = item->data;
-                recordinfo = item->info;
+                recorddata = item.data;
+                recordinfo = item.info;
                 fprintf(fp, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
             }
         }

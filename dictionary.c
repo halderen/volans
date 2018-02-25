@@ -4,6 +4,7 @@
 #include <time.h>
 #include <ldns/ldns.h>
 #include "uthash.h"
+#include "utilities.h"
 #include "proto.h"
 
 #pragma GCC optimize ("O0")
@@ -139,13 +140,13 @@ names_recordsetmarker(dictionary dict)
 }
 
 int
-named_recordhasmarker(dictionary dict)
+names_recordhasmarker(dictionary dict)
 {
     return dict->marker;
 }
 
 dictionary
-named_recordcopy(dictionary dict)
+names_recordcopy(dictionary dict)
 {
     int i, j;
     struct dictionary_struct* target;
@@ -190,7 +191,13 @@ names_recordhasdata(dictionary d, char* name, char* data, char* info)
                     if(!strcmp(data, d->itemsets[i].items[j].data))
                         break;
                 if (j<d->itemsets[i].nitems) {
-                    return 1;
+                    /*if(info)
+                        if(!strcmp(d->itemsets[i].items[j].info, info))
+                            return 1;
+                        else
+                            return 0;
+                    else*/
+                        return 1;
                 }
             }
         }
@@ -222,7 +229,14 @@ names_recordadddata(dictionary d, char* name, char* data, char* info)
         d->itemsets[i].items = realloc(d->itemsets[i].items, sizeof(struct item) * d->itemsets[i].nitems);
         d->itemsets[i].items[j].data = strdup(data);
         d->itemsets[i].items[j].info = strdup(info);
-    }
+    }/* else {
+        if(info) {
+            if(strcmp(d->itemsets[i].items[j].info, info)) {
+                free(d->itemsets[i].items[j].info);
+                d->itemsets[i].items[j].info = strdup(info);
+            }
+        }
+    }*/
 }
 
 void
@@ -273,7 +287,7 @@ names_recorddelall(dictionary d, char* name)
                 free(d->itemsets[i].items[j].info);
             }
             free(d->itemsets[i].items);
-            //free(d->itemsets[i].signature);
+            //free(d->itemsets[i].signature); FIXME
             if(name != NULL)
                 break;
         }
@@ -300,7 +314,10 @@ names_recorddelall(dictionary d, char* name)
 names_iterator
 names_recordalltypes(dictionary d)
 {
-    return names_iterator_array(d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, itemname));
+    names_iterator iter;
+    iter = names_iterator_create(0);
+    names_iterator_addall(iter, d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, itemname));
+    return iter;
 }
 
 names_iterator
@@ -312,7 +329,10 @@ names_recordallvalues(dictionary d, char* name)
             break;
     }
     if(i<d->nitemsets) {
-        return names_iterator_array2(d->itemsets[i].nitems, d->itemsets[i].items, sizeof(struct item));
+        names_iterator iter;
+        iter = names_iterator_create(sizeof(struct item));
+        names_iterator_addall(iter, d->itemsets[i].nitems, d->itemsets[i].items, sizeof(struct item), -1);
+        return iter;
     } else {
         return NULL;
     }

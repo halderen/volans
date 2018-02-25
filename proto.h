@@ -1,9 +1,6 @@
 #ifndef PROTO_H
 #define PROTO_H
 
-#define CHECKALLOC(PTR) if(!(PTR)) { fprintf(stderr,"Out of memory when executing %s at %s:%d\n", #PTR, __FILE__, __LINE__); }
-
-
 /*
  * Definitions relating to an iterator.  An iterator is a object handle that
  * allows you to loop over the elements contained in some abstract data
@@ -66,6 +63,7 @@ int names_end(names_iterator*iter);
 
 names_iterator names_iterator_create(size_t size);
 void names_iterator_add(names_iterator i, void* ptr);
+void names_iterator_addall(names_iterator iter, int count, void* base, size_t memsize, ssize_t offset);
 names_iterator names_iterator_array(int count, void* base, size_t memsize, size_t offset);
 names_iterator names_iterator_array2(int count, void* base, size_t memsize);
 
@@ -111,8 +109,8 @@ dictionary names_recordcreate(char**name);
 void annotate(dictionary, const char* apex);
 void names_recorddestroy(dictionary);
 void names_recordsetmarker(dictionary dict);
-int named_recordhasmarker(dictionary dict);
-dictionary named_recordcopy(dictionary);
+int names_recordhasmarker(dictionary dict);
+dictionary names_recordcopy(dictionary);
 void dispose(dictionary);
 const char* names_recordgetid(dictionary dict, const char* name);
 int names_recordcompare_namerevision(dictionary a, dictionary b);
