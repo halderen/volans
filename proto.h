@@ -77,6 +77,7 @@ int marshallself(marshall_handle h, void* member);
 int marshallbyte(marshall_handle h, void* member);
 int marshallinteger(marshall_handle h, void* member);
 int marshallstring(marshall_handle h, void* member);
+int marshallldnsrr(marshall_handle h, void* member);
 int marshallstringarray(marshall_handle h, void* member);
 int marshalling(marshall_handle h, char* name, void* members, int *membercount, size_t membersize, int (*memberfunction)(marshall_handle,void*));
 
@@ -90,6 +91,7 @@ extern int* marshall_OPTIONAL;
  * the domain structure, containing the denial, rrset, etcetera structures.
  */
 
+typedef struct item* resourcerecord_t;
 typedef struct dictionary_struct* dictionary;
 typedef struct names_index_struct* names_index_type;
 typedef struct names_table_struct* names_table_type;
@@ -100,11 +102,6 @@ int composestring2(char** ptr, const char* src, ...);
 int composestringf(char** ptr, const char* fmt, ...);
 int getset(dictionary d, const char* name, const char** get, const char** set);
 
-struct item {
-    char* data;
-    char* info;
-};
-
 dictionary names_recordcreate(char**name);
 void annotate(dictionary, const char* apex);
 void names_recorddestroy(dictionary);
@@ -114,12 +111,13 @@ dictionary names_recordcopy(dictionary);
 void dispose(dictionary);
 const char* names_recordgetid(dictionary dict, const char* name);
 int names_recordcompare_namerevision(dictionary a, dictionary b);
-int names_recordhasdata(dictionary, char* name, char* data, char* info);
-void names_recordadddata(dictionary, char* name, char* data, char* info);
-void names_recorddeldata(dictionary, char* name, char* data);
-void names_recorddelall(dictionary, char* name);
+int names_recordhasdata(dictionary record, ldns_rr_type recordtype, ldns_rr* rr, int exact);
+void names_recordadddata(dictionary, ldns_rr_type, char* data, char* info);
+void names_recorddeldata(dictionary d, ldns_rr_type rrtype, ldns_rr* rr);
+void names_recorddelall(dictionary, ldns_rr_type rrtype);
 names_iterator names_recordalltypes(dictionary);
-names_iterator names_recordallvalues(dictionary, char*name);
+names_iterator names_recordalltypes2(dictionary);
+names_iterator names_recordallvalues(dictionary, ldns_rr_type rrtype);
 int names_recordhasvalidupto(dictionary);
 int names_recordgetvalidupto(dictionary);
 void names_recordsetvalidupto(dictionary, int value);
@@ -129,9 +127,15 @@ void names_recordsetvalidfrom(dictionary, int value);
 int names_recordhasexpiry(dictionary);
 int names_recordgetexpiry(dictionary);
 void names_recordsetexpiry(dictionary, int value);
-void names_recordsetsignature(dictionary record, char*name, char* signature);
+void names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature, const char* keylocator, int keyflags);
+void names_recordaddsignature2(dictionary record, ldns_rr_type name, ldns_rr* rrsig, const char* keylocator, int keyflags);
 int names_recordmarshall(dictionary*, marshall_handle);
 void names_recordindexfunction(const char* keyname, int (**acceptfunction)(dictionary newitem, dictionary currentitem, int* cmp), int (**comparefunction)(const void *, const void *));
+int names_rrcompare(const char* data, resourcerecord_t);
+int names_rrcompare2(resourcerecord_t, resourcerecord_t);
+void* names_rr2ident(dictionary record, ldns_rr_type rrtype, resourcerecord_t item, size_t header);
+char* names_rr2str(dictionary record, ldns_rr_type recordtype, resourcerecord_t);
+ldns_rr* names_rr2ldns(dictionary record, const char* recordname, ldns_rr_type recordtype, resourcerecord_t);
 
 struct dual {
     dictionary src;
@@ -189,11 +193,14 @@ void names_remove(names_view_type view, dictionary record);
 names_view_type names_viewcreate(names_view_type base, const char* name, const char** keynames);
 void names_viewdestroy(names_view_type view);
 names_iterator names_viewiterator(names_view_type view, int index);
-names_iterator names_viewiterate(names_view_type view, char* name, ...);
+names_iterator names_viewiterate(names_view_type view, const char* name, ...);
 int names_viewcommit(names_view_type view);
 void names_viewreset(names_view_type view);
 int names_viewpersist(names_view_type view, int basefd, char* filename);
 int names_viewrestore(names_view_type view, const char* apex, int basefd, const char* filename);
+
+int names_viewgetdefaultttl(names_view_type view);
+ldns_rr* names_viewgetapex(names_view_type view);
 
 void names_dumprecord(FILE*, dictionary record);
 void names_dumpviewinfo(names_view_type view);
@@ -201,13 +208,12 @@ void names_dumpviewfull(FILE*, names_view_type view);
 
 struct signconf;
 struct signconf* createsignconf(int nkeys);
-void locatekeysignconf(struct signconf* signconf, int index, const char* locator);
+void locatekeysignconf(struct signconf* signconf, int index, const char* locator, int flags);
 void destroysignconf(struct signconf* signconf);
 void setupsignconf(struct signconf* signconf);
 void teardownsignconf(struct signconf* signconf);
-void signrecord(struct signconf* signconf, dictionary record);
-void signrecord2(struct signconf* signconf, dictionary record, char* apex);
-void sign(names_view_type view);
+void signrecord(struct signconf* signconf, dictionary record, const char* apex);
+void sign(names_view_type view, const char* apex);
 void prepare(names_view_type view, int newserial);
 void writezone(names_view_type view, const char* filename, const char* apex, int* defaultttl);
 enum operation_enum { PLAIN, DELTAMINUS, DELTAPLUS };

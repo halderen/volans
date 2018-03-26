@@ -105,7 +105,7 @@ names_indexinsert(names_index_type index, dictionary d)
                     ldns_rbtree_delete(index->tree, node->key);
                     return 0;
                 default:
-                    abort();
+                    abort(); // FIXME
             }
         } else {
             return 1;
@@ -129,7 +129,7 @@ names_indexlookupkey(names_index_type index, const char* keyvalue)
     dictionary find;
     dictionary found;
     find = names_recordcreate(NULL);
-    getset(find,index->keyname,NULL,&keyvalue); // FIXME
+    getset(find,index->keyname,NULL,&keyvalue); // FIXME realisticly we only lookup on name
     found = names_indexlookup(index, find);
     dispose(find);
     return found;

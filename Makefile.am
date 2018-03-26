@@ -31,7 +31,9 @@ volans_SOURCES = volans.c utilities.c utilities.h backend.h \
                  zoneinput.c zoneoutput.c zonesign.c zonesignrecord.c names.c \
                  uthash.h utarray.h utmm.h utstring.h utlist.h \
                  utringbuffer.h utvector.h pkcs11.h \
-                 backendsqlite.c backendmysql.c logging.c logging.h
+                 backendsqlite.c backendmysql.c logging.c logging.h \
+                 duration.c duration.h \
+                 b64_pton.c
 
 if USE_SQLITE3
 volans_SOURCES += schema_sqlite.h

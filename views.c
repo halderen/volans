@@ -18,6 +18,8 @@ struct names_view_struct {
     const char* viewname;
     names_view_type base;
     const char* apex;
+    const char* apexrr;
+    int defaultttl;
     names_table_type changelog;
     int viewid;
     names_commitlog_type commitlog;
@@ -204,8 +206,29 @@ names_viewiterator(names_view_type view, int index)
     return names_indexiterator(view->indices[index]);
 }
 
+int
+ancestors(names_view_type view, char* name)
+{
+    ldns_rdf* apex;
+    ldns_rdf* dname;
+    ldns_rdf* parent;
+    dictionary dict;
+
+    apex = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, view->apex);
+    dname = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, name);
+    
+    while(dict && ldns_dname_is_subdomain(dname, apex)) {
+        parent = ldns_dname_left_chop(dname);
+        if (parent) {
+            dict = names_take(view, 0, parent);
+            ldns_rdf_deep_free(parent);
+        }
+    }
+    return 0;
+}
+
 names_iterator
-names_viewiterate(names_view_type view, char* selector, ...)
+names_viewiterate(names_view_type view, const char* selector, ...)
 {
     va_list ap;
     char* name;
@@ -215,7 +238,7 @@ names_viewiterate(names_view_type view, char* selector, ...)
         name = va_arg(ap, char*);
         iter = names_indexrange(view->indices[1], selector, name);
     } else {
-        abort();
+        abort(); // FIXME
     }
     va_end(ap);
     return iter;
@@ -314,7 +337,10 @@ names_viewrestore(names_view_type view, const char* apex, int basefd, const char
 
     view->apex = strdup(apex);
 
-    fd = openat(basefd, filename, O_RDWR|O_LARGEFILE);
+    if(basefd >= 0)
+        fd = openat(basefd, filename, O_RDWR|O_LARGEFILE);
+    else
+        fd = open(filename, O_RDWR|O_LARGEFILE);
     if(fd >= 0) {
         input = marshallcreate(marshall_INPUT, fd);
         do {
@@ -367,6 +393,18 @@ names_viewpersist(names_view_type view, int basefd, char* filename)
 
     free(tmpfilename);
     return 0;
+}
+
+int
+names_viewgetdefaultttl(names_view_type view)
+{
+    return view->defaultttl;
+}
+
+ldns_rr*
+names_viewgetapex(names_view_type view)
+{
+    return view->apexrr;
 }
 
 void

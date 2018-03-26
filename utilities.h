@@ -43,11 +43,15 @@ extern void diagnostic_print(char *fmt, ...)
 # define BUG(ARG)
 #endif
 
+#ifndef CHECK
 #define CHECK(EX) do { if(EX) { int err = errno; fprintf(stderr, "operation" \
  " \"%s\" failed on line %d: %s (%d)\n", #EX, __LINE__, strerror(err), err); \
   abort(); }} while(0)
+#endif
 
+#ifndef CHECKALLOC
 #define CHECKALLOC(PTR) if(!(PTR)) { fprintf(stderr,"Out of memory when executing %s at %s:%d\n", #PTR, __FILE__, __LINE__); }
+#endif
 
 extern char* argv0;
 
@@ -55,7 +59,5 @@ typedef void (*functioncast_t)(void);
 extern functioncast_t functioncast(void*generic);
 
 unsigned long long int rnd(void);
-
-int mark(char* message);
 
 #endif

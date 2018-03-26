@@ -16,15 +16,16 @@
 
 #pragma GCC optimize ("O0")
 
+const char* baseviewkeys[] = { "namerevision", NULL};
+const char* inputviewkeys[] = { "nameupcoming", "namehierarchy", NULL};
+const char* prepareviewkeys[] = { "namerevision", "namenoserial", "namenewserial", NULL};
+const char* signviewkeys[] = { "nameready", "expiry", "denialname", NULL};
+const char* outputviewkeys[] = { "validnow", NULL};
+
 int
 names_docreate(struct names_struct** zoneptr, const char* apex, const char* persist, const char* input)
 {
     struct names_struct* zone = *zoneptr;
-    const char* baseviewkeys[] = { "namerevision", NULL};
-    const char* inputviewkeys[] = { "nameupcoming", "namehierarchy", NULL};
-    const char* prepareviewkeys[] = { "namerevision", "namenoserial", "namenewserial", NULL};
-    const char* signviewkeys[] = { "nameready", "expiry", "denialname", NULL};
-    const char* outputviewkeys[] = { "validnow", NULL};
     int status = 0;
 
     if(!*zoneptr) {
@@ -69,9 +70,7 @@ void
 names_dodestroy(struct names_struct* names)
 {
     names_viewreset(names->baseview);
-    mark("base updated");
     names_viewpersist(names->baseview, names->basefd, names->persist);
-    mark("base persisted");
 
     names_viewdestroy(names->inputview);
     names_viewdestroy(names->prepareview);
@@ -89,21 +88,16 @@ names_docycle(struct names_struct* names, int* serial, const char* filename)
         names_viewreset(names->prepareview);
         prepare(names->prepareview, *serial);
         if (names_viewcommit(names->prepareview)) {
-            abort();
+            abort(); // FIXME
         }
-        mark("signing");
         names_viewreset(names->signview);
-        mark("sign updated");
-        sign(names->signview);
-        mark("sign signed");
+        sign(names->signview, names->apex);
         if (names_viewcommit(names->signview)) {
-            abort();
+            abort(); // FIXME
         }
-        mark("sign committed");
     }
     if(filename) {
         names_viewreset(names->outputview);
-        mark("persist view");
         writezone(names->outputview, filename, names->apex, NULL);
     }
 }

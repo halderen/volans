@@ -20,16 +20,15 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
 {
     char* s;
     const char* recordname;
-    char* recordtype;
-    struct item item;
-    char* recorddata;
-    char* recordinfo;
+    ldns_rr_type recordtype;
+    resourcerecord_t item;
     names_iterator domainiter;
     names_iterator rrsetiter;
     names_iterator rriter;
     dictionary domainitem;
     ldns_rdf* origin;
     FILE* fp;
+    ldns_rr* rr;
 
     origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
     fp = fopen(filename,"w");
@@ -47,9 +46,9 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
         getset(domainitem, "name", &recordname, NULL);
         for (rrsetiter = names_recordalltypes(domainitem); names_iterate(&rrsetiter, &recordtype); names_advance(&rrsetiter, NULL)) {
             for (rriter = names_recordallvalues(domainitem,recordtype); names_iterate(&rriter, &item); names_advance(&rriter, NULL)) {
-                recorddata = item.data;
-                recordinfo = item.info;
-                fprintf(fp, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
+                s = names_rr2str(domainitem, recordtype, item);
+                fprintf(fp, "%s\n", s);
+                free(s);
             }
         }
     }

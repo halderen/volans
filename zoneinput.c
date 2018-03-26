@@ -44,22 +44,7 @@ rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr)
     len = snprintf(NULL,0,"%u %s",recordttl,recordclass);
     *recordinfoptr = malloc(len+1);
     snprintf(*recordinfoptr,len+1,"%u %s",recordttl,recordclass);
-
-    recorddatalen = 0;
-    for (i = 0; i < ldns_rr_rd_count(rr); i++) {
-        s = ldns_rdf2str(ldns_rr_rdf(rr, i));
-        recorddatalen += strlen(s) + 1;
-        free(s);
-    }
-    recorddata = malloc(recorddatalen);
-    recorddata[0] = '\0';
-    for (i = 0; i < ldns_rr_rd_count(rr); i++) {
-        s = ldns_rdf2str(ldns_rr_rdf(rr, i));
-        if (i > 0)
-            strcat(recorddata, " ");
-        strcat(recorddata, s);
-        free(s);
-    }
+    names_rr2data(rr, 0);
     *recorddataptr = recorddata;
 }
 
@@ -105,10 +90,10 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
 {
     char* s;
     char* recordname;
-    char* recordtype;
+    ldns_rr_type recordtype;
     char* recordinfo;
     char* recorddata;
-    struct item item;
+    resourcerecord_t item;
     names_iterator domainiter;
     names_iterator rrsetiter;
     names_iterator rriter;
@@ -138,12 +123,8 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
             getset(domainitem, "name", (const char**) &recordname, NULL);
             for (rrsetiter = names_recordalltypes(domainitem); names_iterate(&rrsetiter, &recordtype); names_advance(&rrsetiter, NULL)) {
                 for (rriter = names_recordallvalues(domainitem,recordtype); names_iterate(&rriter, &item); names_advance(&rriter, NULL)) {
-                    recorddata = item.data;
-                    recordinfo = item.info;
-                    keylength = composestring2(NULL, recordname, recordtype, recorddata, NULL);;
-                    removal = malloc(sizeof (struct removal_struct) + keylength);
+                    removal = names_rr2ident(domainitem, recordtype, item, sizeof(struct removal_struct));
                     removal->record = domainitem;
-                    composestring(removal->key, recordname, recordtype, recorddata, NULL);
                     HASH_ADD_OPAQUE(removals, key, removal, keylength);
                 }
             }
@@ -155,7 +136,7 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
         if((err = ldns_rr_new_frm_fp_l(&rr,fp,&defaultttl,&origin,&prevowner,&linenum))) {
             switch(err) {
                 case LDNS_STATUS_SYNTAX_INCLUDE:
-                    abort();
+                    abort(); // FIXME
                     break;
                 case LDNS_STATUS_SYNTAX_TTL:
                     if(defaultttlptr) {
@@ -189,14 +170,14 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
             }
         } else {
             recordname = ldns_rdf2str(ldns_rr_owner(rr));
-            recordtype = ldns_rr_type2str(ldns_rr_get_type(rr)); // TYPE%u if unknown
+            recordtype = ldns_rr_get_type(rr);
             rr2data(rr, &recorddata, &recordinfo);
             switch (operation) {
                 case PLAIN:
                     record = names_place(view, recordname);
-                    if (!names_recordhasdata(record,recordtype,recorddata,recordinfo)) {
+                    if (!names_recordhasdata(record,recordtype,rr,1)) {
                         names_own(view, &record);
-                        names_recordadddata(record,recordtype,recorddata,recordinfo);
+                        rrset_add_rr(record, rr);
                     } else {
                         s = NULL;
                         composestring2(&s, recordname, recordtype, recorddata, NULL);
@@ -208,16 +189,16 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
                     break;
                 case DELTAPLUS:
                     record = names_place(view, recordname);
-                    if (!names_recordhasdata(record,recordtype,recorddata,recordinfo)) {
+                    if (!names_recordhasdata(record,recordtype,rr,1)) {
                         names_own(view, &record);
-                        names_recordadddata(record,recordtype,recorddata,recordinfo);
+                        rrset_add_rr(record, rr);
                     }
                     break;
                 case DELTAMINUS:
                     record = names_take(view, 0, recordname);
-                    if (names_recordhasdata(record,recordtype,recorddata, NULL)) {
+                    if (names_recordhasdata(record,recordtype,rr,0)) {
                         names_own(view, &record);
-                        names_recorddeldata(record,recordtype,recorddata);
+                        names_recorddeldata(record,recordtype,rr);
                     }
                     break;
             }
@@ -237,11 +218,11 @@ readzone(names_view_type view, enum operation_enum operation, const char* filena
     if (removals) {
         for(removal=removals; removal!=NULL; removal=removal->hh.next) {
             recordname = (char*) removal->key;
-            recordtype = &recordname[strlen(recordname) + 1];
-            recorddata = &recordtype[strlen(recordtype) + 1];
+            recordtype = ldns_get_rr_type_by_name(&recordname[strlen(recordname) + 1]);
+            recorddata = &recordname[strlen(strlen(&recordname[strlen(recordname) + 1])) + 1];
             record = names_take(view, 0, recordname);
             names_own(view, &record);
-            names_recorddeldata(record,recordtype,recorddata);
+            names_recorddeldata(record,recordtype,NULL); // FIXME should be recorddata iso NULL but ident stores data not
         }
         HASH_ITER(hh, removals, removal, tmp) {
             HASH_DEL(removals, removal);

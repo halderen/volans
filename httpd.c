@@ -50,9 +50,7 @@ deleterecordsets(names_view_type view, struct rpc *rpc)
             rpc->status = RPC_ERR;
             return 0;
         }
-        char* type = ldns_rr_type2str(ldns_rr_get_type(rr));
-        names_recorddelall(record, type);
-        free(type);
+        names_recorddelall(record, ldns_rr_get_type(rr));
     }
     return 0;
 }
@@ -65,7 +63,7 @@ deletedelegation(names_view_type view, struct rpc *rpc)
     dictionary record;
     for (iter = names_viewiterate(view, "allbelow", rpc->delegation_point); names_iterate(&iter, &record); names_advance(&iter, NULL)) {
         names_own(view, &record);
-        names_recorddelall(record, NULL);
+        names_recorddelall(record, 0);
     }
     /* in case of error  rpc->status = RPC_ERR; */
     return 0;
@@ -93,15 +91,8 @@ insertrecords(names_view_type view, struct rpc *rpc)
             return 0;
         }
 
-        char* recorddata;
-        char* recordinfo;
-        rr2data(rr, &recorddata, &recordinfo);
         names_own(view, &record);
-        char* type = ldns_rr_type2str(ldns_rr_get_type(rr));
-        names_recordadddata(record, type, recorddata, recordinfo);
-        free(type);
-        free((void*)recorddata);
-        free((void*)recordinfo);
+        rrset_add_rr(record, rr);
     }
 
     rpc->status = RPC_OK;

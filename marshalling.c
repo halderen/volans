@@ -90,7 +90,7 @@ marshallinteger(marshall_handle h, void* member)
     int size;
     switch(h->mode) {
         case COPY:
-        abort();
+            abort(); // FIXME
             break;
         case READ:
             size = read(h->fd, member, sizeof(int));
@@ -101,13 +101,13 @@ marshallinteger(marshall_handle h, void* member)
             assert(size==sizeof(int));
             break;
         case COUNT:
-            abort();
+            abort(); // FIXME
             break;
         case PRINT:
             size = fprintf(h->fp, "%d", *(int*)member);
             break;
         default:
-            abort();
+            abort(); // FIXME
     }
     return size;
 }
@@ -193,6 +193,68 @@ int
 marshallstringarray(marshall_handle h, void* member)
 {
     return marshallstring(h, (void*)member);
+}
+
+int
+marshallldnsrr(marshall_handle h, void* member)
+{
+    ldns_rr** rr = (ldns_rr**)member;
+    int size;
+    int len;
+    char* str;
+    switch(h->mode) {
+        case COPY:
+            *rr = ldns_rr_clone(*rr);
+            break;
+        case READ:
+            size = marshallinteger(h, &len);
+            if(len >= 0) {
+                str = malloc(len + 1);
+                read(h->fd, str, sizeof(char)*len);
+                str[len] = '\0';
+                size += len;
+                ldns_rr_new_frm_str(&rr, str, 0, NULL, NULL);
+            } else {
+                *rr = NULL;
+            }
+            break;
+        case WRITE:
+            if(*rr) {
+                str = ldns_rr2str(rr);
+                len = strlen(str);
+                size = marshallinteger(h, &len);
+                write(h->fd, str, sizeof(char)*len);
+                size += len;
+                free(str);
+            } else {
+                len = -1;
+                size = marshallinteger(h, &len);
+            }
+            break;
+        case COUNT:
+            if(*rr) {
+                str = ldns_rr2str(rr);
+                len = strlen(str);
+                free(str);
+            } else {
+                len = -1;
+            }
+            size = marshallinteger(h, &len);
+            size += len;
+            break;
+        case PRINT:
+            if(*rr) {
+                str = ldns_rr2str(rr);
+                size = fprintf(h->fp, "\"%s\"", str);
+                free(str);
+            } else {
+                size = fprintf(h->fp, "NULL");
+            }
+            break;
+        default:
+            size = -1;
+    }
+    return size;
 }
 
 enum marshall_func

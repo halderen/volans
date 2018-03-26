@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,33 +7,12 @@
 #include <ldns/ldns.h>
 #include "uthash.h"
 #include "utilities.h"
+#include "logging.h"
 #include "proto.h"
 
 #pragma GCC optimize ("O0")
 
-struct itemset {
-    char* itemname;
-    int nitems;
-    struct item* items;
-    char* signature;
-};
-struct dictionary_struct {
-    char* name;
-    int revision;
-    int marker;
-    char* spanhash;
-    char* spansignature;
-    int* validupto;
-    int* validfrom;
-    int* expiry;
-    int nitemsets;
-    struct itemset* itemsets;
-    char* tmpRevision;
-    char* tmpNameSerial;
-    char* tmpValidFrom;
-    char* tmpValidUpto;
-    char* tmpExpiry;
-};
+#include "dictionary.h"
 
 int
 names_recordcompare_namerevision(dictionary a, dictionary b)
@@ -68,7 +49,8 @@ names_recordcreate(char** name)
     dict->nitemsets = 0;
     dict->itemsets = NULL;
     dict->spanhash = NULL;
-    dict->spansignature = NULL;
+    dict->nspansignatures = 0;
+    dict->spansignatures = NULL;
     dict->validupto = NULL;
     dict->validfrom = NULL;
     dict->expiry = NULL;
@@ -122,10 +104,8 @@ names_recorddestroy(dictionary dict)
     int i, j;
     for(i=0; i<dict->nitemsets; i++) {
         for(j=0; j<dict->itemsets[i].nitems; j++) {
-            free(dict->itemsets[i].items[j].data);
-            free(dict->itemsets[i].items[j].info);
+            ldns_rr_free(dict->itemsets[i].items[j].rr);
         }
-        free(dict->itemsets[i].itemname);
         free(dict->itemsets[i].items);
     }
     free(dict->itemsets);
@@ -133,6 +113,7 @@ names_recorddestroy(dictionary dict)
     free(dict);
 }
 
+/* deletion marker */
 void
 names_recordsetmarker(dictionary dict)
 {
@@ -156,47 +137,46 @@ names_recordcopy(dictionary dict)
     target->nitemsets = dict->nitemsets;
     CHECKALLOC(target->itemsets = malloc(sizeof(struct itemset) * target->nitemsets));
     for(i=0; i<target->nitemsets; i++) {
-        target->itemsets[i].itemname = strdup(dict->itemsets[i].itemname);
+        target->itemsets[i].rrtype = dict->itemsets[i].rrtype;
         target->itemsets[i].nitems= dict->itemsets[i].nitems;
         target->itemsets[i].items = malloc(sizeof(struct item) * dict->itemsets[i].nitems);
-        target->itemsets[i].signature = NULL;
+        target->itemsets[i].nsignatures = 0;
+        target->itemsets[i].signatures = NULL;
         for(j=0; j<dict->itemsets[i].nitems; j++) {
-            target->itemsets[i].items[j].data = strdup(dict->itemsets[i].items[j].data);
-            target->itemsets[i].items[j].info = strdup(dict->itemsets[i].items[j].info);
+            target->itemsets[i].items[j].rr = ldns_rr_clone(dict->itemsets[i].items[j].rr);
         }
     }
     target->spanhash = strdup(dict->spanhash);
-    target->spansignature = NULL;
+    target->nspansignatures = 0;
+    target->spansignatures = NULL;
     return target;
 }
 
 int
-names_recordhasdata(dictionary d, char* name, char* data, char* info)
+names_recordhasdata(dictionary record, ldns_rr_type recordtype, ldns_rr* rr, int exact)
 {
     int i, j;
-    (void)info;
-    if(!d)
+    if(!record)
         return 0;
-    if(name == NULL) {
-        return d->nitemsets > 0;
+    if(recordtype == 0) { /* note there is no rrtype of 0 in DNS */
+        return record->nitemsets > 0;
     } else {
-        for(i=0; i<d->nitemsets; i++)
-            if(!strcmp(name, d->itemsets[i].itemname))
+        for(i=0; i<record->nitemsets; i++)
+            if(record->itemsets[i].rrtype == recordtype)
                 break;
-        if (i<d->nitemsets) {
-            if(data == NULL) {
-                return d->itemsets[i].nitems > 0;
+        if (i<record->nitemsets) {
+            if(rr == NULL) {
+                return record->itemsets[i].nitems > 0;
             } else {
-                for(j=0; j<d->itemsets[i].nitems; j++)
-                    if(!strcmp(data, d->itemsets[i].items[j].data))
+                for(j=0; j<record->itemsets[i].nitems; j++)
+                    if(!ldns_rr_compare(rr, &record->itemsets[i].items[j].rr))
                         break;
-                if (j<d->itemsets[i].nitems) {
-                    /*if(info)
-                        if(!strcmp(d->itemsets[i].items[j].info, info))
-                            return 1;
-                        else
+                if (j<record->itemsets[i].nitems) {
+                    if(exact) {
+                        if(ldns_rr_ttl(record->itemsets[i].items[j].rr) != ldns_rr_ttl(rr))
                             return 0;
-                    else*/
+                        return  1;
+                    } else
                         return 1;
                 }
             }
@@ -205,54 +185,48 @@ names_recordhasdata(dictionary d, char* name, char* data, char* info)
     return 0;
 }
 
+/* FIXME to be renamed to names_recordadddata */
 void
-names_recordadddata(dictionary d, char* name, char* data, char* info)
+rrset_add_rr(dictionary d, ldns_rr* rr)
 {
     int i, j;
-    assert(name);
-    assert(data);
+    const char* name;
+    ldns_rr_type rrtype;
+    rrtype = ldns_rr_get_type(rr);
     for(i=0; i<d->nitemsets; i++)
-        if(!strcmp(name, d->itemsets[i].itemname))
+        if(rrtype == d->itemsets[i].rrtype)
             break;
     if (i==d->nitemsets) {
         d->nitemsets += 1;
         CHECKALLOC(d->itemsets = realloc(d->itemsets, sizeof(struct itemset) * d->nitemsets));
-        d->itemsets[i].itemname = strdup(name);
+        d->itemsets[i].rrtype = rrtype;
         d->itemsets[i].items = NULL;
         d->itemsets[i].nitems = 0;
     }
+    free((void*)name);
     for(j=0; j<d->itemsets[i].nitems; j++)
-        if(!strcmp(data, d->itemsets[i].items[j].data))
+        if(!ldns_rr_compare(rr, &d->itemsets[i].items[j]))
             break;
     if (j==d->itemsets[i].nitems) {
         d->itemsets[i].nitems += 1;
         d->itemsets[i].items = realloc(d->itemsets[i].items, sizeof(struct item) * d->itemsets[i].nitems);
-        d->itemsets[i].items[j].data = strdup(data);
-        d->itemsets[i].items[j].info = strdup(info);
-    }/* else {
-        if(info) {
-            if(strcmp(d->itemsets[i].items[j].info, info)) {
-                free(d->itemsets[i].items[j].info);
-                d->itemsets[i].items[j].info = strdup(info);
-            }
-        }
-    }*/
+        d->itemsets[i].items[j].rr = ldns_rr_clone(rr);
+    }
 }
 
 void
-names_recorddeldata(dictionary d, char* name, char* data)
+names_recorddeldata(dictionary d, ldns_rr_type rrtype, ldns_rr* rr)
 {
     int i, j;
     for(i=0; i<d->nitemsets; i++)
-        if(!strcmp(name, d->itemsets[i].itemname))
+        if(rrtype == d->itemsets[i].rrtype)
             break;
     if (i<d->nitemsets) {
         for(j=0; j<d->itemsets[i].nitems; j++)
-            if(!strcmp(data, d->itemsets[i].items[j].data))
+            if(ldns_rr_compare(rr, d->itemsets[i].items[j].rr))
                 break;
         if (j<d->itemsets[i].nitems) {
-            free(d->itemsets[i].items[j].data);
-            free(d->itemsets[i].items[j].info);
+            ldns_rr_free(d->itemsets[i].items[j].rr);
             d->itemsets[i].nitems -= 1;
             for(; j<d->itemsets[i].nitems; j++) {
                 d->itemsets[i].items[j] = d->itemsets[i].items[j+1];
@@ -277,22 +251,25 @@ names_recorddeldata(dictionary d, char* name, char* data)
 }
 
 void
-names_recorddelall(dictionary d, char* name)
+names_recorddelall(dictionary d, ldns_rr_type rrtype)
 {
     int i, j;
     for(i=0; i<d->nitemsets; i++) {
-        if(name==NULL || !strcmp(name, d->itemsets[i].itemname)) {
+        if(rrtype==0 || d->itemsets[i].rrtype == rrtype) {
             for(j=0; j<d->itemsets[i].nitems; j++) {
-                free(d->itemsets[i].items[j].data);
-                free(d->itemsets[i].items[j].info);
+                ldns_rr_free(d->itemsets[i].items[j].rr);
             }
             free(d->itemsets[i].items);
-            //free(d->itemsets[i].signature); FIXME
-            if(name != NULL)
+            for(j=0; j<d->itemsets[i].nsignatures; j++) {
+                ldns_rr_free(d->itemsets[i].signatures[j].rr);
+                free(d->itemsets[i].signatures[j].keylocator);
+            }
+            free(d->itemsets[i].signatures);
+            if(rrtype != 0)
                 break;
         }
     }
-    if(name==NULL) {
+    if(rrtype == 0) {
         free(d->itemsets);
         d->itemsets = NULL;
         d->nitemsets = 0;
@@ -316,16 +293,34 @@ names_recordalltypes(dictionary d)
 {
     names_iterator iter;
     iter = names_iterator_create(0);
-    names_iterator_addall(iter, d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, itemname));
+    names_iterator_addall(iter, d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, rrtype));
     return iter;
 }
 
 names_iterator
-names_recordallvalues(dictionary d, char* name)
+names_recordalltypes2(dictionary d)
+{
+    names_iterator iter;
+    iter = names_iterator_create(0);
+    names_iterator_addall(iter, d->nitemsets, d->itemsets, sizeof(struct itemset), offsetof(struct itemset, rrtype));
+    return iter;
+}
+
+names_iterator
+rrsigs(struct itemset* rrset)
+{
+    names_iterator iter;
+    iter = names_iterator_create(0);
+    names_iterator_addall(iter, rrset->nsignatures, rrset->signatures, sizeof(struct itemsig), offsetof(struct itemsig, rr));
+    return iter;
+}
+
+names_iterator
+names_recordallvalues(dictionary d, ldns_rr_type rrtype)
 {
     int i;
     for(i=0; i<d->nitemsets; i++) {
-        if(!strcmp(name, d->itemsets[i].itemname))
+        if(rrtype == d->itemsets[i].rrtype)
             break;
     }
     if(i<d->nitemsets) {
@@ -343,17 +338,24 @@ dispose(dictionary dict)
 {
     int i, j;
     for(i=0; i<dict->nitemsets; i++) {
-      for(j=0; j<dict->itemsets[i].nitems; j++) {
-        free(dict->itemsets[i].items[j].data);
-        free(dict->itemsets[i].items[j].info);
-      }
-      free(dict->itemsets[i].itemname);
-      free(dict->itemsets[i].items);
+        for(j=0; j<dict->itemsets[i].nitems; j++) {
+            ldns_rr_free(dict->itemsets[i].items[j].rr);
+        }
+        for(j=0; j<dict->itemsets[i].nsignatures; j++) {
+            ldns_rr_free(dict->itemsets[i].signatures[j].rr);
+            free(dict->itemsets[i].signatures[j].keylocator);
+        }
+        free(dict->itemsets[i].signatures);
+        free(dict->itemsets[i].items);
     }
     free(dict->itemsets);
     free(dict->name);
     free(dict->spanhash);
-    free(dict->spansignature);
+    for(i=0; i<dict->nspansignatures; i++) {
+        ldns_rr_free(dict->spansignatures[i].rr);
+        free(dict->spansignatures[i].keylocator);
+    }
+    free(dict->spansignatures);
     free(dict->validupto);
     free(dict->validfrom);
     free(dict->expiry);
@@ -425,17 +427,27 @@ names_recordsetexpiry(dictionary record, int value)
 }
 
 void
-names_recordsetsignature(dictionary record, char*name, char* signature)
+names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature, const char* keylocator, int keyflags) /* FIXME pass TTL */
 {
     int i;
-    if(name == NULL) {
-        record->spansignature = strdup(signature);
+    if(rrtype == 0) {
+        record->nspansignatures += 1;
+        record->spansignatures = realloc(record->spansignatures, sizeof(struct itemsig) * record->nspansignatures);
+        record->spansignatures[record->nspansignatures-1].keylocator = strdup(keylocator);
+        record->spansignatures[record->nspansignatures-1].keyflags = keyflags;
+        ldns_rr_new_frm_str(&record->spansignatures[record->nspansignatures-1].rr, signature, 0, NULL, NULL);
     } else {
         for(i=0; i<record->nitemsets; i++) {
-            if(!strcmp(record->itemsets[i].itemname, name)) {
-                record->itemsets[0].signature = strdup(signature);
+            if(rrtype == record->itemsets[i].rrtype) {
                 break;
             }
+        }
+        if(i<record->nitemsets) {
+            record->itemsets[i].nsignatures += 1;
+            record->itemsets[i].signatures = realloc(record->spansignatures, sizeof(struct itemsig) * record->itemsets[i].nsignatures);
+            record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].keylocator = strdup(keylocator);
+            record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].keyflags = keyflags;
+            ldns_rr_new_frm_str(&record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].rr, signature, 0, NULL, NULL);
         }
     }
 }
@@ -450,17 +462,22 @@ marshall(marshall_handle h, void* ptr)
     size += marshalling(h, "revision", &(d->revision), NULL, 0, marshallinteger);
     size += marshalling(h, "marker", &(d->marker), NULL, 0, marshallinteger);
     size += marshalling(h, "spanhash", &(d->spanhash), NULL, 0, marshallstring);
-    size += marshalling(h, "spansignature", &(d->spansignature), NULL, 0, marshallstring);
+    size += marshalling(h, "itemsets", &(d->spansignatures), &(d->nspansignatures), sizeof(struct itemsig), marshallself);
+    for(i=0; i<d->nitemsets; i++) {
+        size += marshalling(h, "rr", &(d->spansignatures[i].rr), NULL, 0, marshallldnsrr);
+        size += marshalling(h, "keylocator", &(d->spansignatures[i].keylocator), NULL, 0, marshallstring);
+        size += marshalling(h, "keyflags", &(d->spansignatures[i].keyflags), NULL, 0, marshallinteger);
+        size += marshalling(h, NULL, NULL, &(d->nspansignatures), i, marshallself);
+    }
     size += marshalling(h, "validupto", &(d->validupto), marshall_OPTIONAL, sizeof(int), marshallinteger);
     size += marshalling(h, "validfrom", &(d->validfrom), marshall_OPTIONAL, sizeof(int), marshallinteger);
     size += marshalling(h, "expiry", &(d->expiry), marshall_OPTIONAL, sizeof(int), marshallinteger);
     size += marshalling(h, "itemsets", &(d->itemsets), &(d->nitemsets), sizeof(struct itemset), marshallself);
     for(i=0; i<d->nitemsets; i++) {
-        size += marshalling(h, "itemname", &(d->itemsets[i].itemname), NULL, 0, marshallstring);
+        size += marshalling(h, "itemname", &(d->itemsets[i].rrtype), NULL, 0, marshallinteger);
         size += marshalling(h, "items", &(d->itemsets[i].items), &(d->itemsets[i].nitems), sizeof(struct item), marshallself);
         for(j=0; j<d->itemsets[i].nitems; j++) {
-            size += marshalling(h, "rdata", &(d->itemsets[i].items[j].data), NULL, 0, marshallstring);
-            size += marshalling(h, "rinfo", &(d->itemsets[i].items[j].info), NULL, 0, marshallstring);
+            size += marshalling(h, "rr", &(d->itemsets[i].items[j].rr), NULL, 0, marshallldnsrr);
             size += marshalling(h, NULL, NULL, &(d->itemsets[i].nitems), j, marshallself);
         }
         size += marshalling(h, NULL, NULL, &(d->nitemsets), i, marshallself);
@@ -671,7 +688,7 @@ getset(dictionary d, const char* name, const char** get, const char** set)
             d->spanhash = strdup(*set);
         }
     } else {
-        abort();
+        abort(); // FIXME
     }
     return rc;
 }
@@ -955,6 +972,59 @@ names_recordindexfunction(const char* keyname, int (**acceptfunc)(dictionary new
     } else if(!strcmp(keyname,"namehierarchy")) {
         REFERCOMPARISON("name",comparenamehierarchy);
     } else {
-        abort();
+        abort(); // FIXME
     }    
+}
+
+
+char*
+names_rr2data(ldns_rr* rr, size_t header)
+{
+    int i;
+    char* s;
+    size_t recorddatalen;
+    char* recorddata;
+    recorddatalen = header;
+    for (i = 0; i < ldns_rr_rd_count(rr); i++) {
+        s = ldns_rdf2str(ldns_rr_rdf(rr, i));
+        recorddatalen += strlen(s) + 1;
+        free(s);
+    }
+    recorddata = malloc(recorddatalen);
+    recorddata[header] = '\0';
+    for (i = 0; i < ldns_rr_rd_count(rr); i++) {
+        s = ldns_rdf2str(ldns_rr_rdf(rr, i));
+        if (i > 0)
+            strcat(&recorddata[header], " ");
+        strcat(&recorddata[header], s);
+        free(s);
+    }
+    return recorddata;
+}
+
+void*
+names_rr2ident(dictionary record, ldns_rr_type rrtype, resourcerecord_t item, size_t header)
+{
+    char* rrtypestr;
+    char* buffer;
+    size_t size;
+    
+    rrtypestr = ldns_rr_type2str(rrtype);
+    size = header + strlen(record->name) + 1 + strlen(rrtypestr) + 1;
+    buffer = names_rr2data(item->rr, size);
+    sprintf(&buffer[header],"%s %s",record->name,rrtypestr);
+    buffer[header + strlen(&buffer[header])] = ' ';
+    return buffer;
+}
+
+char*
+names_rr2str(dictionary record, ldns_rr_type recordtype, resourcerecord_t item)
+{
+    return ldns_rr2str(item->rr);
+}
+
+ldns_rr*
+names_rr2ldns(dictionary record, const char* recordname, ldns_rr_type recordtype, resourcerecord_t item)
+{
+    return ldns_rr_clone(item->rr);
 }

@@ -34,7 +34,8 @@ struct signconf {
         time_t expiration;
         uint16_t keytag;
         ldns_rr* dnskey;
-        char* locator;
+        char* keylocator;
+        int keyflags;
         void* handle;
         CK_FUNCTION_LIST_PTR pkcs;
         CK_SESSION_HANDLE session;
@@ -53,15 +54,17 @@ createsignconf(int nkeys)
     signconf->nkeys = nkeys;
     signconf->keys = malloc(signconf->nkeys * sizeof(struct signconfkey));
     for(i=0; i<signconf->nkeys; i++) {
-        signconf->keys[i].locator = NULL;
+        signconf->keys[i].keylocator = NULL;
+        signconf->keys[i].keyflags = 0;
     }
     return signconf;
 }
 
 void
-locatekeysignconf(struct signconf* signconf, int index, const char* locator)
+locatekeysignconf(struct signconf* signconf, int index, const char* keylocator, int keyflags)
 {
-    signconf->keys[index].locator = strdup(locator);
+    signconf->keys[index].keylocator = strdup(keylocator);
+    signconf->keys[index].keyflags = keyflags;
 }
 
 void
@@ -69,7 +72,7 @@ destroysignconf(struct signconf* signconf)
 {
     int i;
     for(i=0; i<signconf->nkeys; i++) {
-        free(signconf->keys[i].locator);
+        free(signconf->keys[i].keylocator);
     }
     free(signconf->keys);
     free(signconf);
@@ -117,58 +120,7 @@ teardownsignconf(struct signconf* signconf)
     ldns_key_list_free(signconf->keylist);
 }
 
-void
-signrecord(struct signconf* signconf, dictionary record)
-{
-    names_iterator typeiter;
-    names_iterator dataiter;
-    struct item item;
-    const char* recordname;
-    const char* recordinfo;
-    char* recordtype;
-    char* recorddata;
-    ldns_rr* rr;
-    ldns_rr_list* rrset;
-    ldns_rr_list* rrsignatures;
-    ldns_rr_type rrtype;
-    char** signatures;
-    int nsignatures, signaturesidx;
-
-    char s[10240]; // FIXME
-    ldns_rdf* origin;
-    uint32_t defaultttl = 60;
-    ldns_status err;
-    origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, "example.");
-    
-    getset(record, "name", &recordname, NULL);
-
-    for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
-        rrset = ldns_rr_list_new();
-        rrtype = ldns_get_rr_type_by_name(recordtype);
-        for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
-            recorddata = item.data;
-            recordinfo = item.info;
-            sprintf(s, "%s\t%s\t%s\t%s\n", recordname, (recordinfo?recordinfo:""), recordtype, recorddata);
-            err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
-            assert(err == LDNS_STATUS_OK);
-            ldns_rr_list_push_rr(rrset, rr);
-        }        
-        rrsignatures = ldns_sign_public(rrset, signconf->keylist);
-        nsignatures = ldns_rr_list_rr_count(rrsignatures);
-        signatures = malloc(sizeof(char*)*nsignatures);
-        signaturesidx = 0;
-        while((rr = ldns_rr_list_pop_rr(rrsignatures))) {
-            signatures[signaturesidx++] = ldns_rdf2str(ldns_rr_rdf(rr,0));
-            ldns_rr_free(rr);
-        }
-        ldns_rr_list_deep_free(rrset);
-        ldns_rr_list_deep_free(rrsignatures);
-
-        free(signatures);
-    }
-}
-
-char*
+unsigned char*
 signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ldns_rr_list* rrset)
 {
     unsigned int i;
@@ -256,10 +208,13 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
             digestprefixlen = 0;
             digest_len = LDNS_SHA384_DIGEST_LENGTH;
             break;
+        default:
+            abort(); // FIXME
     }
 
-    name = ldns_rr_owner(ldns_rr_list_rr(rrset,0));
-    ttl = ldns_rr_ttl(ldns_rr_list_rr(rrset, 0));
+    ldns_rr* rrsample = ldns_rr_list_rr(rrset,0);
+    name = ldns_rr_owner(rrsample);
+    ttl = ldns_rr_ttl(rrsample);
     /* label count - get it from the first rr in the rr_list
      * RFC 4035 section 2.2: dnssec label length and wildcards
      */
@@ -269,19 +224,27 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
     }
 
     rrsig = ldns_rr_new_frm_type(LDNS_RR_TYPE_RRSIG);
-    ldns_rr_set_class(rrsig, ldns_rr_get_class(ldns_rr_list_rr(rrset,0)));
+    ldns_rr_set_class(rrsig, ldns_rr_get_class(rrsample));
     ldns_rr_set_ttl(rrsig, ttl);
     ldns_rr_set_owner(rrsig, ldns_rdf_clone(name));
-    ldns_rr_rrsig_set_origttl(rrsig, ldns_native2rdf_int32(LDNS_RDF_TYPE_INT32, ttl));
-    ldns_rr_rrsig_set_signame(rrsig, ldns_rdf_clone(signconf->owner));
-    ldns_rr_rrsig_set_labels(rrsig, ldns_native2rdf_int8(LDNS_RDF_TYPE_INT8, nlabels));
-    ldns_rr_rrsig_set_inception(rrsig, ldns_native2rdf_int32(LDNS_RDF_TYPE_TIME, signconfkey->inception));
-    ldns_rr_rrsig_set_expiration(rrsig,ldns_native2rdf_int32(LDNS_RDF_TYPE_TIME, signconfkey->expiration));
-    ldns_rr_rrsig_set_keytag(rrsig, ldns_native2rdf_int16(LDNS_RDF_TYPE_INT16, signconfkey->keytag));
-    ldns_rr_rrsig_set_algorithm(rrsig, ldns_native2rdf_int8(LDNS_RDF_TYPE_ALG, signconfkey->algorithm));
-    ldns_rr_rrsig_set_typecovered(rrsig, ldns_native2rdf_int16(LDNS_RDF_TYPE_TYPE, ldns_rr_get_type(ldns_rr_list_rr(rrset,0))));
+    CHECK(!ldns_rr_rrsig_set_origttl(rrsig, ldns_native2rdf_int32(LDNS_RDF_TYPE_INT32, ttl)));
+    CHECK(!ldns_rr_rrsig_set_signame(rrsig, ldns_rdf_clone(signconf->owner)));
+    CHECK(!ldns_rr_rrsig_set_labels(rrsig, ldns_native2rdf_int8(LDNS_RDF_TYPE_INT8, nlabels)));
+    CHECK(!ldns_rr_rrsig_set_inception(rrsig, ldns_native2rdf_int32(LDNS_RDF_TYPE_TIME, signconfkey->inception)));
+    CHECK(!ldns_rr_rrsig_set_expiration(rrsig,ldns_native2rdf_int32(LDNS_RDF_TYPE_TIME, signconfkey->expiration)));
+    CHECK(!ldns_rr_rrsig_set_keytag(rrsig, ldns_native2rdf_int16(LDNS_RDF_TYPE_INT16, signconfkey->keytag)));
+    CHECK(!ldns_rr_rrsig_set_algorithm(rrsig, ldns_native2rdf_int8(LDNS_RDF_TYPE_ALG, signconfkey->algorithm)));
+    CHECK(!ldns_rr_rrsig_set_typecovered(rrsig, ldns_native2rdf_int16(LDNS_RDF_TYPE_TYPE, ldns_rr_get_type(rrsample))));
+   
 
     buffer = ldns_buffer_new(LDNS_MAX_PACKETLEN);
+
+    for (i = 0; i < ldns_rr_rd_count(rrsig) - 1; i++) {
+        ldns_rdf*x = ldns_rr_rdf(rrsig, i);
+        (void) ldns_rdf2buffer_wire_canonical(buffer, x);
+    }
+
+
     ldns_rrsig2buffer_wire(buffer, rrsig);
     for(i=0; i<ldns_rr_list_rr_count(rrset); i++) {
         ldns_rr2canonical(ldns_rr_list_rr(rrset, i));
@@ -333,7 +296,7 @@ initializesignconfkey(struct signconfkey* signing)
     };
     
     signing->handle = dlopen(solibrary, RTLD_NOW);
-    getFunctionList = functioncast(dlsym(signing->handle, "C_GetFunctionList"));
+    getFunctionList = (CK_C_GetFunctionList) functioncast(dlsym(signing->handle, "C_GetFunctionList"));
     getFunctionList(&signing->pkcs);
 
 
@@ -424,7 +387,7 @@ keytag(struct signconf* signconf, struct signconfkey* signconfkey)
                 memcpy(&data[3], public_exponent, public_exponent_len);
                 memcpy(&data[3 + public_exponent_len], modulus, modulus_len);
             } else {
-                abort();
+                abort(); // FIXME
             }
             rdata = ldns_rdf_new(LDNS_RDF_TYPE_B64, data_size, data);
             free(public_exponent);
@@ -436,7 +399,7 @@ keytag(struct signconf* signconf, struct signconfkey* signconfkey)
         case CKK_GOSTR3410:
         case CKK_EC:
         default:
-            abort();
+            abort(); // FIXME
     }
     ldns_rr_push_rdf(dnskey, rdata);
     signconfkey->keytag = ldns_calc_keytag(dnskey);
@@ -444,21 +407,20 @@ keytag(struct signconf* signconf, struct signconfkey* signconfkey)
 }
 
 void
-signrecord2(struct signconf* signconf, dictionary record, char* apex)
+signrecord2(struct signconf* signconf, dictionary record, const char* apex)
 {
     names_iterator typeiter;
     names_iterator dataiter;
-    struct item item;
-    int i;
+    resourcerecord_t item;
+    int i, len;
     const char* recordname;
     const char* recordinfo;
-    char* recordtype;
+    ldns_rr_type recordtype;
     char* recorddata;
     ldns_rr* rr;
     ldns_rr_list* rrset;
     char* signature;
-
-    char s[10240];
+    char* s;
     ldns_rdf* origin;
     uint32_t defaultttl = 60;
     ldns_status err;
@@ -469,17 +431,57 @@ signrecord2(struct signconf* signconf, dictionary record, char* apex)
     for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
         rrset = ldns_rr_list_new();
         for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
-            recorddata = item.data;
-            recordinfo = item.info;
-            sprintf(s, "%s\t%s\t%s\t%s\n", recordname, recordinfo, recordtype, recorddata);
-            err = ldns_rr_new_frm_str(&rr,s,defaultttl,origin,NULL);
-            assert(err == LDNS_STATUS_OK);
+            rr = names_rr2ldns(record, recordname, recordtype, item);
             ldns_rr_list_push_rr(rrset, rr);
         }
         for(i=0; i<signconf->nkeys; i++) {
             signature = signrecordpartial(signconf, &signconf->keys[i], rrset);
-            names_recordsetsignature(record, recordtype, signature);
+            names_recordaddsignature(record, recordtype, signature, signconf->keys[i].keylocator, signconf->keys[i].keyflags);
             free(signature);
         }
+    }
+}
+void
+signrecord(struct signconf* signconf, dictionary record, const char* apex)
+{
+    names_iterator typeiter;
+    names_iterator dataiter;
+    resourcerecord_t item;
+    const char* recordname;
+    const char* recordinfo;
+    ldns_rr_type recordtype;
+    char* recorddata;
+    ldns_rr* rr;
+    ldns_rr_list* rrset;
+    ldns_rr_list* rrsignatures;
+    char** signatures;
+    int nsignatures, signaturesidx;
+    int len;
+    char* s;
+    ldns_rdf* origin;
+    uint32_t defaultttl = 60;
+    ldns_status err;
+    origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
+    
+    getset(record, "name", &recordname, NULL);
+
+    for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
+        rrset = ldns_rr_list_new();
+        for(dataiter = names_recordallvalues(record, recordtype); names_iterate(&dataiter, &item); names_advance(&dataiter, NULL)) {
+            rr = names_rr2ldns(record, recordname, recordtype, item);
+            ldns_rr_list_push_rr(rrset, rr);
+        }        
+        rrsignatures = ldns_sign_public(rrset, signconf->keylist);
+        nsignatures = ldns_rr_list_rr_count(rrsignatures);
+        signatures = malloc(sizeof(char*)*nsignatures);
+        signaturesidx = 0;
+        while((rr = ldns_rr_list_pop_rr(rrsignatures))) {
+            signatures[signaturesidx++] = ldns_rdf2str(ldns_rr_rdf(rr,0));
+            ldns_rr_free(rr);
+        }
+        ldns_rr_list_deep_free(rrset);
+        ldns_rr_list_deep_free(rrsignatures);
+
+        free(signatures);
     }
 }

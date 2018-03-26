@@ -39,7 +39,7 @@ prepare(names_view_type view, int newserial)
             names_recordsetvalidupto(change->src, newserial);
         }
         if(!names_recordhasvalidfrom(change->dst)) {
-            if(names_recordhasdata(change->dst, NULL, NULL, NULL)) {
+            if(names_recordhasdata(change->dst, 0, NULL, NULL)) {
                 names_amend(view, change->dst);
                 names_recordsetvalidfrom(change->dst, newserial);
             } else {
@@ -50,18 +50,18 @@ prepare(names_view_type view, int newserial)
 }
 
 void
-sign(names_view_type view)
+sign(names_view_type view, const char* apex)
 {
     dictionary domain;
     names_iterator iter;
     struct signconf* signconf;
-    
+
     signconf = createsignconf(1);
-    locatekeysignconf(signconf, 0, "Kexample.+008+24693.private");
+    locatekeysignconf(signconf, 0, "Kexample.+008+24693.private", 0);
     setupsignconf(signconf);
     for(iter=expiring(view); names_iterate(&iter,&domain); names_advance(&iter,NULL)) {
         names_amend(view, domain);
-        signrecord(signconf, domain);
+        signrecord(signconf, domain, apex);
         names_recordsetexpiry(domain, 1);
     }
     teardownsignconf(signconf);

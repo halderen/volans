@@ -14,6 +14,8 @@ config.log
 config.h
 config.h.in
 config.status
+config.guess
+config.sub
 **/*.o
 stamp-h1
 schema_*.h

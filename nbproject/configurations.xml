@@ -24,6 +24,9 @@
       <itemPath>backend.h</itemPath>
       <itemPath>cmdhandler.h</itemPath>
       <itemPath>data.h</itemPath>
+      <itemPath>dictionary.h</itemPath>
+      <itemPath>duration.c</itemPath>
+      <itemPath>duration.h</itemPath>
       <itemPath>experiment.h</itemPath>
       <itemPath>opendnssec.h</itemPath>
       <itemPath>proto.h</itemPath>
@@ -45,6 +48,7 @@
       <itemPath>daemonize.c</itemPath>
       <itemPath>dictionary.c</itemPath>
       <itemPath>experiment.c</itemPath>
+      <itemPath>functions.c</itemPath>
       <itemPath>httpd.c</itemPath>
       <itemPath>index.c</itemPath>
       <itemPath>iterator.c</itemPath>
@@ -55,6 +59,7 @@
       <itemPath>marshalling.c</itemPath>
       <itemPath>model.c</itemPath>
       <itemPath>/home/berry/volans/names.c</itemPath>
+      <itemPath>opendnssec.c</itemPath>
       <itemPath>/home/berry/volans/rpc.c</itemPath>
       <itemPath>table.c</itemPath>
       <itemPath>utilities.c</itemPath>
@@ -127,9 +132,17 @@
       </item>
       <item path="dictionary.c" ex="false" tool="0" flavor2="0">
       </item>
+      <item path="dictionary.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="duration.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="duration.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="experiment.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="experiment.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="functions.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="httpd.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -146,6 +159,8 @@
       <item path="marshalling.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="model.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="opendnssec.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -246,9 +261,17 @@
       </item>
       <item path="dictionary.c" ex="false" tool="0" flavor2="0">
       </item>
+      <item path="dictionary.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="duration.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="duration.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="experiment.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="experiment.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="functions.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="httpd.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -265,6 +288,8 @@
       <item path="marshalling.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="model.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="opendnssec.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="opendnssec.h" ex="false" tool="3" flavor2="0">
       </item>
