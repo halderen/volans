@@ -15,7 +15,7 @@ typedef logger_result_type (*logger_procedure)(const logger_cls_type*, const log
 
 
 struct logger_chain_struct {
-    char* name;
+    const char* name;
     logger_procedure logger;
 
 };

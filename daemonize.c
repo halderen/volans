@@ -87,5 +87,5 @@ drop(char *username, char* groupname)
             /* log error */
         }
     }
-    return 0;
+    return status;
 }

@@ -17,7 +17,6 @@ struct itemset {
 };
 
 struct dictionary_struct {
-    ldns_rr* rrname;
     char* name;
     int revision;
     int marker;

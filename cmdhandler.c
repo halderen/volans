@@ -176,15 +176,19 @@ cmdhandler_run(void)
     evhttp_set_gencb(httpd, handler, NULL);
     event_dispatch();
 }
-pthread_barrier_t barrier;
+
+static pthread_barrier_t barrier;
+
 void*
 routine(void *argument)
 {
+    (void)argument;
     /* initialization */
     pthread_barrier_wait(&barrier);
     cmdhandler_run();
     return NULL;
 }
+
 void
 cmdhandler_run2(void)
 {

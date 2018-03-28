@@ -34,6 +34,7 @@
 #include "utilities.h"
 #include "proto.h"
 #include "duration.h"
+#include "logging.h"
 
 static const char* duration_str = "duration";
 

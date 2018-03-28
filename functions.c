@@ -1,4 +1,3 @@
-#define NOODS
 #include "config.h"
 
 #include <stdio.h>
@@ -415,7 +414,7 @@ rrset_sign(signconf_type* signconf, names_view_type view, dictionary domain, hsm
     /* RRset signing completed */
     ldns_rr_list_free(rr_list);
     ldns_rr_list_deep_free(rr_list_clone);
-#ifndef NOODS
+#ifnef OPENDNSSEC_CONFIG_DIR
     pthread_mutex_lock(&zone->stats->stats_lock);
     if (rrset->rrtype == LDNS_RR_TYPE_SOA) {
         zone->stats->sig_soa_count += newsigs;
@@ -585,4 +584,77 @@ key_type*
 keylist_lookup_by_locator(keylist_type* kl, const char* locator)
 {
     return &kl[0];
+}
+
+/**
+ * Look up RRset at this domain.
+ *
+ */
+rrset_type*
+domain_lookup_rrset(domain_type* domain, ldns_rr_type rrtype)
+{
+    rrset_type* rrset = NULL;
+    if (!domain || !domain->rrsets || !rrtype) {
+        return NULL;
+    }
+    rrset = domain->rrsets;
+    while (rrset && rrset->rrtype != rrtype) {
+        rrset = rrset->next;
+    }
+    return rrset;
+}
+
+/**
+ * Lookup RRset.
+ *
+ */
+ldns_rr*
+zone_lookup_apex_rrset(names_view_type view, ldns_rr_type type, ldns_rr* template)
+{
+    domain_type* domain = NULL;
+    if (!type) {
+        return NULL;
+    }
+    domain = names_lookupapex(view);
+    if (domain == NULL) {
+        return NULL;
+    }
+    return domain_lookup_rrset(domain, type);
+}
+
+/**
+ * Delete RR.
+ *
+ */
+
+/**
+ * Delete NSEC3PARAM RRs.
+ *
+ * Marks all NSEC3PARAM records as removed.
+ */
+ods_status
+zone_del_nsec3params(zone_type* zone, names_view_type view)
+{
+    domain_type* domain = NULL;
+    rrset_type* rrset = NULL;
+    int i;
+
+    ods_log_assert(zone);
+    ods_log_assert(zone->name);
+
+    domain = names_lookupname(view, zone->apex);
+    if (!domain) {
+        ods_log_verbose("[%s] unable to delete RR from zone %s: "
+            "domain not found", zone_str, zone->name);
+        return ODS_STATUS_UNCHANGED;
+    }
+
+    rrset = domain_lookup_rrset(domain, LDNS_RR_TYPE_NSEC3PARAMS);
+    if (!rrset) {
+        ods_log_verbose("[%s] NSEC3PARAM in zone %s not found: "
+            "skipping delete", zone_str, zone->name);
+        return ODS_STATUS_UNCHANGED;
+    }
+
+    return ODS_STATUS_OK;
 }

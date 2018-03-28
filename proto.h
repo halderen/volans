@@ -79,7 +79,7 @@ int marshallinteger(marshall_handle h, void* member);
 int marshallstring(marshall_handle h, void* member);
 int marshallldnsrr(marshall_handle h, void* member);
 int marshallstringarray(marshall_handle h, void* member);
-int marshalling(marshall_handle h, char* name, void* members, int *membercount, size_t membersize, int (*memberfunction)(marshall_handle,void*));
+int marshalling(marshall_handle h, const char* name, void* members, int *membercount, size_t membersize, int (*memberfunction)(marshall_handle,void*));
 
 extern int* marshall_OPTIONAL;
 
@@ -113,6 +113,7 @@ const char* names_recordgetid(dictionary dict, const char* name);
 int names_recordcompare_namerevision(dictionary a, dictionary b);
 int names_recordhasdata(dictionary record, ldns_rr_type recordtype, ldns_rr* rr, int exact);
 void names_recordadddata(dictionary, ldns_rr_type, char* data, char* info);
+void rrset_add_rr(dictionary d, ldns_rr* rr);
 void names_recorddeldata(dictionary d, ldns_rr_type rrtype, ldns_rr* rr);
 void names_recorddelall(dictionary, ldns_rr_type rrtype);
 names_iterator names_recordalltypes(dictionary);
@@ -127,8 +128,7 @@ void names_recordsetvalidfrom(dictionary, int value);
 int names_recordhasexpiry(dictionary);
 int names_recordgetexpiry(dictionary);
 void names_recordsetexpiry(dictionary, int value);
-void names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature, const char* keylocator, int keyflags);
-void names_recordaddsignature2(dictionary record, ldns_rr_type name, ldns_rr* rrsig, const char* keylocator, int keyflags);
+void names_recordaddsignature(dictionary record, ldns_rr_type rrtype, ldns_rr* rrsig, const char* keylocator, int keyflags);
 int names_recordmarshall(dictionary*, marshall_handle);
 void names_recordindexfunction(const char* keyname, int (**acceptfunction)(dictionary newitem, dictionary currentitem, int* cmp), int (**comparefunction)(const void *, const void *));
 int names_rrcompare(const char* data, resourcerecord_t);
@@ -136,6 +136,7 @@ int names_rrcompare2(resourcerecord_t, resourcerecord_t);
 void* names_rr2ident(dictionary record, ldns_rr_type rrtype, resourcerecord_t item, size_t header);
 char* names_rr2str(dictionary record, ldns_rr_type recordtype, resourcerecord_t);
 ldns_rr* names_rr2ldns(dictionary record, const char* recordname, ldns_rr_type recordtype, resourcerecord_t);
+char* names_rr2data(ldns_rr* rr, size_t header);
 
 struct dual {
     dictionary src;
@@ -151,7 +152,7 @@ int names_indexinsert(names_index_type, dictionary);
 void names_indexdestroy(names_index_type, void (*userfunc)(void* arg, void* key, void* val), void* userarg);
 int names_indexaccept(names_index_type, dictionary);
 names_iterator names_indexiterator(names_index_type);
-names_iterator names_indexrange(names_index_type,char* selection,...);
+names_iterator names_indexrange(names_index_type,const char* selection,...);
 
 names_iterator noexpiry(names_view_type);
 names_iterator neighbors(names_view_type);
@@ -215,7 +216,7 @@ void teardownsignconf(struct signconf* signconf);
 void signrecord(struct signconf* signconf, dictionary record, const char* apex);
 void sign(names_view_type view, const char* apex);
 void prepare(names_view_type view, int newserial);
-void writezone(names_view_type view, const char* filename, const char* apex, int* defaultttl);
+int writezone(names_view_type view, const char* filename, const char* apex, int* defaultttl);
 enum operation_enum { PLAIN, DELTAMINUS, DELTAPLUS };
 int readzone(names_view_type view, enum operation_enum operation, const char* filename, char** apexptr, int* defaultttlptr);
 void rr2data(ldns_rr* rr, char** recorddataptr, char** recordinfoptr);
@@ -232,9 +233,20 @@ struct names_struct {
     char* persist;
 };
 
+#ifdef OPENDNSSEC_CONFIG_DIR
+void namedb_nsecify(zone_type* zone, names_view_type view, uint32_t* num_added);
+ods_status namedb_update_serial(zone_type* db, const char* zone_name, uint32_t, uint32_t);
+const char* rrset_type2str(ldns_rr_type type);
+ods_status rrset_sign(signconf_type* signconf, names_view_type view, dictionary domain, hsm_ctx_t* ctx, struct itemset* rrset, time_t signtime);
+int eachdomainset();
+ods_status rrset_getliteralrr(ldns_rr** dnskey, const char *resourcerecord, uint32_t ttl, ldns_rdf* apex);
+ods_status namedb_domain_entize(names_view_type view, dictionary domain, ldns_rdf* apex);
+int eachrrr();
+#else
 int names_docreate(struct names_struct** zoneptr, const char* apex, const char* persist, const char* input);
 void names_dodestroy(struct names_struct* names);
 void names_docycle(struct names_struct* names, int* serial, const char* filename);
 void names_dopersist(struct names_struct* names);
+#endif
 
 #endif

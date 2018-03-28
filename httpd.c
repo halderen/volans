@@ -105,6 +105,7 @@ static int
 dispatch(struct httpd* httpd, struct rpc *rpc)
 {
     names_view_type view;
+    (void)httpd;
     view = getzone(rpc->zone)->inputview;
     names_viewreset(view);
     switch (rpc->opc) {
@@ -177,6 +178,7 @@ handle_connection(void *cls, struct MHD_Connection *connection,
     size_t *upload_data_size, void **con_cls)
 {
     struct httpd* httpd = (struct httpd*) cls;
+    (void)version;
     if(!*con_cls) {
         struct connection_info *con_info = malloc(sizeof(struct connection_info));
         if (!con_info) return MHD_NO;
@@ -228,6 +230,9 @@ handle_connection_done(void *cls, struct MHD_Connection *connection,
     void **con_cls, enum MHD_RequestTerminationCode toe)
 {
     struct connection_info *con_info = *con_cls;
+    (void)cls;
+    (void)connection;
+    (void)toe;
     if (con_info) {
         free(con_info->buf);
     }

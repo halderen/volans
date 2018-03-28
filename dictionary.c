@@ -169,7 +169,7 @@ names_recordhasdata(dictionary record, ldns_rr_type recordtype, ldns_rr* rr, int
                 return record->itemsets[i].nitems > 0;
             } else {
                 for(j=0; j<record->itemsets[i].nitems; j++)
-                    if(!ldns_rr_compare(rr, &record->itemsets[i].items[j].rr))
+                    if(!ldns_rr_compare(rr, record->itemsets[i].items[j].rr))
                         break;
                 if (j<record->itemsets[i].nitems) {
                     if(exact) {
@@ -190,7 +190,6 @@ void
 rrset_add_rr(dictionary d, ldns_rr* rr)
 {
     int i, j;
-    const char* name;
     ldns_rr_type rrtype;
     rrtype = ldns_rr_get_type(rr);
     for(i=0; i<d->nitemsets; i++)
@@ -202,10 +201,11 @@ rrset_add_rr(dictionary d, ldns_rr* rr)
         d->itemsets[i].rrtype = rrtype;
         d->itemsets[i].items = NULL;
         d->itemsets[i].nitems = 0;
+        d->itemsets[i].nsignatures = 0;
+        d->itemsets[i].signatures = NULL;
     }
-    free((void*)name);
     for(j=0; j<d->itemsets[i].nitems; j++)
-        if(!ldns_rr_compare(rr, &d->itemsets[i].items[j]))
+        if(!ldns_rr_compare(rr, d->itemsets[i].items[j].rr))
             break;
     if (j==d->itemsets[i].nitems) {
         d->itemsets[i].nitems += 1;
@@ -325,8 +325,9 @@ names_recordallvalues(dictionary d, ldns_rr_type rrtype)
     }
     if(i<d->nitemsets) {
         names_iterator iter;
-        iter = names_iterator_create(sizeof(struct item));
-        names_iterator_addall(iter, d->itemsets[i].nitems, d->itemsets[i].items, sizeof(struct item), -1);
+        iter = names_iterator_create(0);
+        for(int j=0; j<d->itemsets[j].nitems; j++)
+            names_iterator_add(iter, &d->itemsets[i].items[j]);
         return iter;
     } else {
         return NULL;
@@ -427,7 +428,7 @@ names_recordsetexpiry(dictionary record, int value)
 }
 
 void
-names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature, const char* keylocator, int keyflags) /* FIXME pass TTL */
+names_recordaddsignature(dictionary record, ldns_rr_type rrtype, ldns_rr* signature, const char* keylocator, int keyflags)
 {
     int i;
     if(rrtype == 0) {
@@ -435,7 +436,7 @@ names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature
         record->spansignatures = realloc(record->spansignatures, sizeof(struct itemsig) * record->nspansignatures);
         record->spansignatures[record->nspansignatures-1].keylocator = strdup(keylocator);
         record->spansignatures[record->nspansignatures-1].keyflags = keyflags;
-        ldns_rr_new_frm_str(&record->spansignatures[record->nspansignatures-1].rr, signature, 0, NULL, NULL);
+        record->spansignatures[record->nspansignatures-1].rr = ldns_rr_clone(signature);
     } else {
         for(i=0; i<record->nitemsets; i++) {
             if(rrtype == record->itemsets[i].rrtype) {
@@ -447,7 +448,7 @@ names_recordaddsignature(dictionary record, ldns_rr_type rrtype, char* signature
             record->itemsets[i].signatures = realloc(record->spansignatures, sizeof(struct itemsig) * record->itemsets[i].nsignatures);
             record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].keylocator = strdup(keylocator);
             record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].keyflags = keyflags;
-            ldns_rr_new_frm_str(&record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].rr, signature, 0, NULL, NULL);
+            record->itemsets[i].signatures[record->itemsets[i].nsignatures-1].rr = ldns_rr_clone(signature);
         }
     }
 }
@@ -462,8 +463,8 @@ marshall(marshall_handle h, void* ptr)
     size += marshalling(h, "revision", &(d->revision), NULL, 0, marshallinteger);
     size += marshalling(h, "marker", &(d->marker), NULL, 0, marshallinteger);
     size += marshalling(h, "spanhash", &(d->spanhash), NULL, 0, marshallstring);
-    size += marshalling(h, "itemsets", &(d->spansignatures), &(d->nspansignatures), sizeof(struct itemsig), marshallself);
-    for(i=0; i<d->nitemsets; i++) {
+    size += marshalling(h, "spansignatures", &(d->spansignatures), &(d->nspansignatures), sizeof(struct itemsig), marshallself);
+    for(i=0; i<d->nspansignatures; i++) {
         size += marshalling(h, "rr", &(d->spansignatures[i].rr), NULL, 0, marshallldnsrr);
         size += marshalling(h, "keylocator", &(d->spansignatures[i].keylocator), NULL, 0, marshallstring);
         size += marshalling(h, "keyflags", &(d->spansignatures[i].keyflags), NULL, 0, marshallinteger);
@@ -614,7 +615,7 @@ getset(dictionary d, const char* name, const char** get, const char** set)
     if (get)
         *get = NULL;
     if (!strcmp(name,"name") || !strcmp(name,"nameupcoming")) {
-        rc = (d->name != NULL);
+        rc = (d->name == NULL);
         if (get) {
             *get = d->name;
         }
@@ -980,9 +981,9 @@ names_recordindexfunction(const char* keyname, int (**acceptfunc)(dictionary new
 char*
 names_rr2data(ldns_rr* rr, size_t header)
 {
-    int i;
+    unsigned int i;
     char* s;
-    size_t recorddatalen;
+    int recorddatalen;
     char* recorddata;
     recorddatalen = header;
     for (i = 0; i < ldns_rr_rd_count(rr); i++) {
@@ -1020,11 +1021,16 @@ names_rr2ident(dictionary record, ldns_rr_type rrtype, resourcerecord_t item, si
 char*
 names_rr2str(dictionary record, ldns_rr_type recordtype, resourcerecord_t item)
 {
+    (void)record;
+    (void)recordtype;
     return ldns_rr2str(item->rr);
 }
 
 ldns_rr*
 names_rr2ldns(dictionary record, const char* recordname, ldns_rr_type recordtype, resourcerecord_t item)
 {
+    (void)record;
+    (void)recordname;
+    (void)recordtype;
     return ldns_rr_clone(item->rr);
 }

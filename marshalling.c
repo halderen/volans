@@ -213,14 +213,14 @@ marshallldnsrr(marshall_handle h, void* member)
                 read(h->fd, str, sizeof(char)*len);
                 str[len] = '\0';
                 size += len;
-                ldns_rr_new_frm_str(&rr, str, 0, NULL, NULL);
+                ldns_rr_new_frm_str(rr, str, 0, NULL, NULL);
             } else {
                 *rr = NULL;
             }
             break;
         case WRITE:
             if(*rr) {
-                str = ldns_rr2str(rr);
+                str = ldns_rr2str(*rr);
                 len = strlen(str);
                 size = marshallinteger(h, &len);
                 write(h->fd, str, sizeof(char)*len);
@@ -233,7 +233,7 @@ marshallldnsrr(marshall_handle h, void* member)
             break;
         case COUNT:
             if(*rr) {
-                str = ldns_rr2str(rr);
+                str = ldns_rr2str(*rr);
                 len = strlen(str);
                 free(str);
             } else {
@@ -244,8 +244,8 @@ marshallldnsrr(marshall_handle h, void* member)
             break;
         case PRINT:
             if(*rr) {
-                str = ldns_rr2str(rr);
-                size = fprintf(h->fp, "\"%s\"", str);
+                str = ldns_rr2str(*rr);
+                size = fprintf(h->fp, "\"%*.*s\"\n", (int)strlen(str)-1, (int)strlen(str)-1, str);
                 free(str);
             } else {
                 size = fprintf(h->fp, "NULL");
@@ -270,7 +270,7 @@ marshallfunc(int (*memberfunction)(marshall_handle,void*))
 }
 
 int
-marshalling(marshall_handle h, char* name, void* members, int *membercount, size_t membersize, int (*memberfunction)(marshall_handle,void*))
+marshalling(marshall_handle h, const char* name, void* members, int *membercount, size_t membersize, int (*memberfunction)(marshall_handle,void*))
 {
     char* array;
     char* dest;

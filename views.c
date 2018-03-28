@@ -18,7 +18,6 @@ struct names_view_struct {
     const char* viewname;
     names_view_type base;
     const char* apex;
-    const char* apexrr;
     int defaultttl;
     names_table_type changelog;
     int viewid;
@@ -212,6 +211,7 @@ ancestors(names_view_type view, char* name)
     ldns_rdf* apex;
     ldns_rdf* dname;
     ldns_rdf* parent;
+    char* parentname;
     dictionary dict;
 
     apex = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, view->apex);
@@ -220,7 +220,9 @@ ancestors(names_view_type view, char* name)
     while(dict && ldns_dname_is_subdomain(dname, apex)) {
         parent = ldns_dname_left_chop(dname);
         if (parent) {
-            dict = names_take(view, 0, parent);
+            parentname = ldns_rdf2str(parent);
+            dict = names_take(view, 0, parentname);
+            free(parentname);
             ldns_rdf_deep_free(parent);
         }
     }
@@ -399,12 +401,6 @@ int
 names_viewgetdefaultttl(names_view_type view)
 {
     return view->defaultttl;
-}
-
-ldns_rr*
-names_viewgetapex(names_view_type view)
-{
-    return view->apexrr;
 }
 
 void

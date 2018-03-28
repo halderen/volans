@@ -15,7 +15,7 @@
 
 #pragma GCC optimize ("O0")
 
-void
+int
 writezone(names_view_type view, const char* filename, const char* apex, int* defaultttl)
 {
     char* s;
@@ -28,7 +28,6 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
     dictionary domainitem;
     ldns_rdf* origin;
     FILE* fp;
-    ldns_rr* rr;
 
     origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
     fp = fopen(filename,"w");
@@ -47,11 +46,12 @@ writezone(names_view_type view, const char* filename, const char* apex, int* def
         for (rrsetiter = names_recordalltypes(domainitem); names_iterate(&rrsetiter, &recordtype); names_advance(&rrsetiter, NULL)) {
             for (rriter = names_recordallvalues(domainitem,recordtype); names_iterate(&rriter, &item); names_advance(&rriter, NULL)) {
                 s = names_rr2str(domainitem, recordtype, item);
-                fprintf(fp, "%s\n", s);
+                fprintf(fp, "%s", s);
                 free(s);
             }
         }
     }
     fclose(fp);
     ldns_rdf_free(origin);
+    return 0;
 }

@@ -39,7 +39,7 @@ prepare(names_view_type view, int newserial)
             names_recordsetvalidupto(change->src, newserial);
         }
         if(!names_recordhasvalidfrom(change->dst)) {
-            if(names_recordhasdata(change->dst, 0, NULL, NULL)) {
+            if(names_recordhasdata(change->dst, 0, NULL, 0)) {
                 names_amend(view, change->dst);
                 names_recordsetvalidfrom(change->dst, newserial);
             } else {

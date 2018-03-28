@@ -230,7 +230,7 @@ names_indexiterator(names_index_type index)
 }
 
 names_iterator
-names_indexrange(names_index_type index, char* selection, ...)
+names_indexrange(names_index_type index, const char* selection, ...)
 {
     va_list ap;
     const char* find;

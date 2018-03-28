@@ -81,8 +81,6 @@ destroysignconf(struct signconf* signconf)
 void
 setupsignconf(struct signconf* signconf)
 {
-    ldns_status statuscode;
-    int statusflag;
     int i;
     signconf->keylist = ldns_key_list_new();
     for(i=0; i<signconf->nkeys; i++) {
@@ -120,7 +118,7 @@ teardownsignconf(struct signconf* signconf)
     ldns_key_list_free(signconf->keylist);
 }
 
-unsigned char*
+ldns_rr*
 signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ldns_rr_list* rrset)
 {
     unsigned int i;
@@ -129,7 +127,6 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
     uint8_t nlabels;
     ldns_rdf* name;
     ldns_buffer* buffer;
-    CK_RV rv;
     CK_ULONG signatureLen = 512;
     CK_BYTE signature[signatureLen];
     CK_ULONG digest_len;
@@ -260,8 +257,8 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
     data = malloc(data_len);
     if(digestprefixlen)
         memcpy(data, digestprefix, digestprefixlen);
-    rv = signconfkey->pkcs->C_DigestInit(signconfkey->session, &hashmechanism);
-    rv = signconfkey->pkcs->C_Digest(signconfkey->session, ldns_buffer_begin(buffer), ldns_buffer_position(buffer), &data[digestprefixlen], &digest_len);
+    signconfkey->pkcs->C_DigestInit(signconfkey->session, &hashmechanism);
+    signconfkey->pkcs->C_Digest(signconfkey->session, ldns_buffer_begin(buffer), ldns_buffer_position(buffer), &data[digestprefixlen], &digest_len);
 
     signconfkey->pkcs->C_SignInit(signconfkey->session, &signmechanism, signconfkey->key);
     signconfkey->pkcs->C_Sign(signconfkey->session, data, data_len, signature, &signatureLen);
@@ -271,7 +268,7 @@ signrecordpartial(struct signconf* signconf, struct signconfkey* signconfkey, ld
     free(data);
     ldns_buffer_free(buffer);
 
-    return signature;
+    return rrsig;
 }
 
 static CK_C_INITIALIZE_ARGS initializationArgs = { NULL, NULL, NULL, NULL, CKF_OS_LOCKING_OK, NULL };
@@ -419,7 +416,7 @@ signrecord2(struct signconf* signconf, dictionary record, const char* apex)
     char* recorddata;
     ldns_rr* rr;
     ldns_rr_list* rrset;
-    char* signature;
+    ldns_rr* signature;
     char* s;
     ldns_rdf* origin;
     uint32_t defaultttl = 60;
@@ -437,7 +434,7 @@ signrecord2(struct signconf* signconf, dictionary record, const char* apex)
         for(i=0; i<signconf->nkeys; i++) {
             signature = signrecordpartial(signconf, &signconf->keys[i], rrset);
             names_recordaddsignature(record, recordtype, signature, signconf->keys[i].keylocator, signconf->keys[i].keyflags);
-            free(signature);
+            ldns_rr_free(signature);
         }
     }
 }
@@ -463,7 +460,7 @@ signrecord(struct signconf* signconf, dictionary record, const char* apex)
     ldns_status err;
     origin = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_DNAME, apex);
     
-    getset(record, "name", &recordname, NULL);
+    CHECK(getset(record, "name", &recordname, NULL));
 
     for(typeiter = names_recordalltypes(record); names_iterate(&typeiter, &recordtype); names_advance(&typeiter, NULL)) {
         rrset = ldns_rr_list_new();
